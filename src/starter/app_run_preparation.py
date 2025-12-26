@@ -1,0 +1,96 @@
+"""Main crossroad to prepare app to be started."""
+import logging
+from pathlib import Path
+from .app_preparation_by_platform.platform_handler import PlatformHandler
+from .app_preparation_by_type.other import OtherProcessing
+from .app_preparation_by_type.setup import SetupProcessing
+from .app_preparation_by_type.wheel import WheelProcessing
+
+from .create_venv import CreateVenv
+from .use_existing_venv import UseExistingVenv
+
+__all__ = ['AppPreparationAndRun']
+
+logger = logging.getLogger(__name__)
+
+
+class AppPreparationAndRun():
+    def __init__(self, *args, **kwargs):
+        # Get context handler
+        self.context_handler = kwargs.get("context_handler", None)
+        # Get config handler
+        self.config_handler = kwargs.get("config_handler", None)
+        # Get environment structure
+        self.env_structure = kwargs.get("env_structure", None)
+        # App folder
+        self.app_folder = self.get_app_folder_from_environment()
+        # Platform handler
+        self.platform_handler = None
+        self.set_plaform_handler()
+        # Instances of processing classes for supported types
+        self.setup = SetupProcessing(
+            app_path=self.app_folder,
+            config_handler=self.config_handler,
+            platform_handler=self.platform_handler)
+        self.wheel = WheelProcessing(
+            app_path=self.app_folder,
+            config_handler=self.config_handler,
+            platform_handler=self.platform_handler,
+            env_structure=self.env_structure)
+        self.other = OtherProcessing(
+            app_path=self.app_folder,
+            config_handler=self.config_handler,
+            platform_handler=self.platform_handler)
+
+    def get_app_folder_from_environment(self):
+        """Get app folder form environment structure."""
+        if self.env_structure:
+            return self.env_structure.get_path_app_folder()
+
+    def set_plaform_handler(self):
+        """Initialize platform handler and get the instance."""
+        platform = PlatformHandler(
+            context_handler=self.context_handler,
+            cwd=Path(__file__),
+            venv_folder=Path(self.env_structure.get_path_venv_folder())
+        )
+        self.platform_handler = platform.get_handler()
+
+    def venv_preparation(self):
+        """Prepare venv and it content"""
+        if self.env_structure and self.platform_handler\
+                and self.context_handler:
+            # Creating venv from scratch
+            if self.env_structure.folder_is_empty(
+                    self.env_structure.get_path_venv_folder()):
+                venv = CreateVenv(
+                    context_handler=self.context_handler,
+                    platform_handler=self.platform_handler)
+                venv.create(str(self.env_structure.get_path_venv_folder()))
+            # Loading existing venv
+            if not self.env_structure.folder_is_empty(
+                    self.env_structure.get_path_venv_folder()):
+                venv = UseExistingVenv(context_handler=self.context_handler)
+                venv.create()
+
+    def ready_and_start(self, start_fresh=False) -> bool:
+        """Check if venv needs to be changed. Set it and start app."""
+        logger.info("installing app and starting it.")
+        next = self.other.install_and_start(
+            start_fresh, True)
+        next = self.setup.install_and_start(
+            start_fresh, next)
+        next = self.wheel.install_and_start(
+            start_fresh, next)
+
+    def app_files_changed(self) -> bool:
+        """Check if files related to app to be started changed.add()
+
+        If app's files chnaged we have to update existing venv.
+        """
+        # TODO
+        # - more clever/advanced way how to say something changed.
+        setup = self.setup.files_changed()
+        wheel = self.wheel.files_changed()
+        other = self.other.files_changed()
+        return setup or wheel or other
