@@ -11,6 +11,7 @@ __all__ = ['ConfigHandler']
 
 logger = logging.getLogger(__name__)
 
+# Keys for config file
 CONFIG_APP_FILES = "app_files"
 CONFIG_APP_PARAMS = "app_params"
 CONFIG_SPECIFIED_MAIN_FILE = "main_file"
@@ -21,7 +22,7 @@ KEEP_KEYS = ["app_folder", "main_file"]
 
 
 class ConfigHandler():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         self.config_file = kwargs.get("config_file", None)
         self.config = None
         self.load_config()
@@ -33,13 +34,15 @@ class ConfigHandler():
             for key, value in self.config.items():
                 if key in KEEP_KEYS and key in new_config_content:
                     new_config_content[key] = value
-                    # # Get type of value
-                    # value_type = type(value
             self.set_config(new_config_content)
             self.save_config()
 
     def set_config_file(self, config_file):
-        """Set config file path"""
+        """Set config file path.
+
+        Args:
+        config_file = path to config file
+        """
         if config_file:
             self.config_file = config_file
 
@@ -48,7 +51,11 @@ class ConfigHandler():
         return self.config_file
 
     def set_config(self, config=None):
-        """Set config to new value"""
+        """Set config to new value.
+
+        Args:
+        config = new config content(json object)
+        """
         if config:
             self.config = config
 
@@ -60,16 +67,6 @@ class ConfigHandler():
         """Returns path to config file, otherwise None."""
         return self.config_file
 
-    # def get_venv_path(self):
-    #     """Get venv path from config.
-
-    #     Returns:
-    #     Returs path or None
-    #     """
-    #     if self.config:
-    #         return self.config.get("app_env", None)
-    #     return None
-
     def get_app_files(self):
         """Get list of files + timestamps from config file."""
         key = CONFIG_APP_FILES
@@ -77,9 +74,13 @@ class ConfigHandler():
         if key:
             values = self.get_value_for_key(key)
         return values
-    
+
     def set_app_files(self, value: dict):
-        """Set app files to config."""
+        """Set app files to config.
+
+        Args:
+        values = value for 'app_files' key
+        """
         key = CONFIG_APP_FILES
         if key and value:
             self.set_value_for_key(key, value)
@@ -91,13 +92,17 @@ class ConfigHandler():
         if key:
             value = self.get_value_for_key(key)
         return value
-    
+
     def set_app_params(self, value):
-        """Set app's parameters."""
+        """Set app's parameters.
+
+        Args:
+        value = value for 'app_params' key
+        """
         key = CONFIG_APP_PARAMS
         if key and value:
             self.set_value_for_key(key, value)
-    
+
     def get_app_folder(self):
         """Get app folder path."""
         key = CONFIG_APP_FOLDER
@@ -105,34 +110,34 @@ class ConfigHandler():
         if key:
             value = self.get_value_for_key(key)
         return value
-    
+
     def set_app_folder(self, path: str):
-        """Set app's folder"""
+        """Set app's folder.
+
+        Args:
+        path = value for 'app_folder' key
+        """
         key = CONFIG_APP_FOLDER
         if key and path:
             self.set_value_for_key(key, path)
-    
+
     def get_main_file(self):
-        """Get app's main file"""
+        """Get app's main file."""
         key = CONFIG_SPECIFIED_MAIN_FILE
         value = None
         if key:
             value = self.get_value_for_key(key)
         return value
-    
+
     def set_main_file(self, path):
-        """Set app's main file"""
+        """Set app's main file.
+
+        Args:
+        path = value for 'main_file' key
+        """
         key = CONFIG_SPECIFIED_MAIN_FILE
         if key and path:
             self.set_value_for_key(key, path)
-
-    # def set_app_path_to_config(self, key, value):
-    #     """Set new value of app_path to config. If key doesn't exists,
-    #     create it."""
-    #     if self.config is not None and key and key in self.config:
-    #         self.config[key] = value
-    #         self.save_config()
-    #         self.load_config()
 
     def get_root_keys_from_config_object(self) -> list | None:
         """Get all root config keys.
@@ -153,7 +158,7 @@ class ConfigHandler():
                     self.config = json.loads(config.read())
         except Exception as e:
             logger.error(
-                "Config file has not valid content, json format. {%s}" % e)
+                "Config file has not valid content, json format. %s", e)
 
     def save_config(self):
         """Save config to file."""
@@ -168,14 +173,14 @@ class ConfigHandler():
                     config_out.write(json_out)
 
         except Exception as e:
-            logger.error("Saving config content to file failed. {%s}" % e)
+            logger.error("Saving config content to file failed. %s", e)
 
     def get_value_for_key(self, key):
         """Get value for specified key from config.
 
         If key doesnt exists returns None.
 
-        Params:
+        Args:
         key = key to search for
         """
         value = None
@@ -186,11 +191,11 @@ class ConfigHandler():
         return value
 
     def set_value_for_key(self, key, value):
-        """Set value for specified key in config.add()
+        """Set value for specified key in config.
 
         If key doesn't exist, create it.
 
-        Params:
+        Args:
         key = key to search for
         value = value to store
         """
@@ -199,39 +204,44 @@ class ConfigHandler():
             self.save_config()
             self.load_config()
 
-    def get_list_of_dependencies_for_app(self, key="app_dependencies") -> list:
-        """Gest list of dependencies stored for app. This list been installed
-           last time venv been prepared
+    # def get_list_of_dependencies_for_app(self, key="app_dependencies") -> list:
+    #     """Gest list of dependencies stored for app. This list been installed
+    #        last time venv been prepared
 
-        If list is epmty or no key exists, it return None, otherwise list of
-        dicts.
-        """
-        dependencies = []
-        if self.config and key and key in self.config:
-            for item in self.config[key]:
-                parts = item.split("==")
-                if parts:
-                    dependency = {}
-                    dependency[parts[0]] = ""
-                    if len(parts) == 2:
-                        dependency[parts[0]] = parts[-1]
-                    dependencies.append(dependency)
+    #     Args:
+    #     key = key to search for
 
-        return dependencies
+    #     Returns:
+    #     If list is empty or no key exists, it return None, otherwise list of
+    #     dicts.
+    #     """
+    #     dependencies = []
+    #     if self.config and key and key in self.config:
+    #         for item in self.config[key]:
+    #             parts = item.split("==")
+    #             if parts:
+    #                 dependency = {}
+    #                 dependency[parts[0]] = ""
+    #                 if len(parts) == 2:
+    #                     dependency[parts[0]] = parts[-1]
+    #                 dependencies.append(dependency)
 
-    def store_list_of_dependencies_for_app(self,
-                                           dependencies,
-                                           key="app_dependencies"):
-        """Store the list of dependencies for next time.
+    #     return dependencies
 
-        Params:
-        dependencies = list of dependencies to store.
-        """
-        if dependencies and key:
-            self.config[key] = []
-            for new_dependency in dependencies:
-                dependency = new_dependency.get("name", None)
-                dependency += "==" + new_dependency.get("version") if \
-                    dependency and new_dependency.get("version") else ""
-                self.config[key].append(dependency)
-            self.save_config()
+    # def store_list_of_dependencies_for_app(self,
+    #                                        dependencies,
+    #                                        key="app_dependencies"):
+    #     """Store the list of dependencies for next time.
+
+    #     Args:
+    #     dependencies = list of dependencies to store.
+    #     key = key to store value for
+    #     """
+    #     if dependencies and key:
+    #         self.config[key] = []
+    #         for new_dependency in dependencies:
+    #             dependency = new_dependency.get("name", None)
+    #             dependency += "==" + new_dependency.get("version") if \
+    #                 dependency and new_dependency.get("version") else ""
+    #             self.config[key].append(dependency)
+    #         self.save_config()

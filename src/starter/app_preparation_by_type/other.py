@@ -1,4 +1,4 @@
-"""TBD."""
+import enumerate
 import logging
 import re
 import glob
@@ -17,8 +17,8 @@ __all__ = ['OtherProcessing']
 
 
 DEFAULT_SETUP_CREATE = 'setup.py'
-FILES_CHANGED_FILTER = ["**/*.py"]
-REQUIRED_FILES = ['poetry.lock', 'pyproject.toml']
+FILES_CHANGED_FILTER = ["*.py"]
+REQUIRED_FILES = ['(.*).toml$']
 ENTRY_POINT = 'if __name__ == "__main__"'
 POETRY_INSTALLATION_ARGS = ["-m", "pip", "install", "-e", "."]
 
@@ -30,7 +30,7 @@ class OtherProcessing(TypeOfPackage):
       poetry's style.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         self.app_path = kwargs.get("app_path", None)
         self.config_handler = kwargs.get("config_handler", None)
         self.platform_handler = kwargs.get("platform_handler", None)
@@ -41,14 +41,22 @@ class OtherProcessing(TypeOfPackage):
                 self,
                 start_fresh=False,
                 continue_processing=True):
-        """Install dependencies, app and start it"""
-        next = True
+        """Install dependencies, app and start it.
+
+        Args:
+        start_fresh = clear the environment and install it again
+        continoue_processing = flag signaling 'try to install and start'
+
+        Returns:
+        True in case to signal next in the chain should countinue to
+        try to install and start.
+        """
+        should_continue = continue_processing
         # Should we continue
         if continue_processing and self.it_is_me():
             # Check if we are to suppose to install
             if start_fresh and self.platform_handler:
-                next = False
-                # Store current list to config file
+                should_continue = False
                 current_list = get_list_of_files_and_timestamp(
                     self.app_path,
                     filters=FILES_CHANGED_FILTER + REQUIRED_FILES
@@ -80,11 +88,14 @@ class OtherProcessing(TypeOfPackage):
                     # Remove dummy setup file
                     self.setup_dummy.remove(setup_file)
                 except Exception as e:
-                    logger.error("Installation of app failed. {%s}" % e)
+                    logger.error("Installation of app failed. %s", e)
+                    raise e
             # Can we continue
             if self.platform_handler:
                 # Search for main files
                 main_files = self.search_for_main_files()
+                # Exceptions list
+                exceptions_list = []
                 for item in main_files:
                     try:
                         # Get app params if exists
@@ -95,24 +106,32 @@ class OtherProcessing(TypeOfPackage):
                             item,
                             app_params=app_params
                         )
-                        next = False
+                        # next = False
                     except Exception as e:
-                        logger.warning(
-                            "Attempt to start main file {%s} failed" % item)
-                        logger.warning("Problem was %s" % e)
+                        logger.error(
+                            "Attempt to start main file %s failed", item)
+                        # logger.error("Problem was %s" % e)
+                        # raise e
+                        exceptions_list.append(e)
+                        continue
+
+                # If amount of founded 'main' files is equal to catched
+                # exceptions --> raise error
+                if len(exceptions_list) == len(main_files):
+                    raise RuntimeError(
+                        """Could not properly start the app, because no valid
+                           'main file' has been discovered(other option).""")
+                should_continue = False
             else:
                 logger.warning("Cannot continue because unknown platform,\
                     during of other's installation.")
-        else:
-            next = True
-        return next
-    
+        return should_continue
+
     def files_changed(self):
         """Check if files/folders changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
         if previous_list and self.app_path:
-            # Get current list
             current_list = get_list_of_files_and_timestamp(
                 self.app_path,
                 filters=FILES_CHANGED_FILTER + REQUIRED_FILES
@@ -135,19 +154,18 @@ class OtherProcessing(TypeOfPackage):
             changed = True
         return changed
 
-    def refill_reload_variables_content(self, **kwargs):
-        """Take received variables content and set it."""
-        self.app_path = kwargs.get("app_path", self.app_path)
-        self.config_handler = kwargs.get(
-            "config_processing",
-            self.config_handler
-        )
+    # def refill_reload_variables_content(self, **kwargs):
+    #     """Take received variables content and set it."""
+    #     self.app_path = kwargs.get("app_path", self.app_path)
+    #     self.config_handler = kwargs.get(
+    #         "config_processing",
+    #         self.config_handler
+    #     )
 
     def it_is_me(self):
-        """Try to assume that this app can be installed via poetry + setup
+        """Try to assume that this app can be installed via setuptools.
 
-        Searching for all file required by poetry+setup to be succesfully
-        installed.
+        Searching for all required files.
 
         Returns:
         In case yes, returns True, othewise False
@@ -155,10 +173,9 @@ class OtherProcessing(TypeOfPackage):
         valid = False
         if self.app_path and Path(self.app_path).exists():
             root_files = Path(self.app_path).glob("**/*")
-            required = [file for file in root_files if Path(file).name
-                        in REQUIRED_FILES]
-            if len(required) == len(REQUIRED_FILES):
-                valid = True
+            for file in root_files:
+                if re.search(REQUIRED_FILES[0], str(file)):
+                    valid = True
         return valid
 
     def prepare_dummy_setup(self, **kwargs):
@@ -169,7 +186,7 @@ class OtherProcessing(TypeOfPackage):
                 folder_to_create=kwargs.get("folder_to_create", None),
                 main_folder=kwargs.get("main_folder", None))
         except Exception as e:
-            logger.error("Cannot prepare dummy setup file. {%s}" % e)
+            logger.error("Cannot prepare dummy setup file. %s", e)
         return setup_path
 
     def search_for_main_files(self, folder_path=None):
@@ -182,12 +199,13 @@ class OtherProcessing(TypeOfPackage):
             founded_files = Path(search_folder).rglob("*.py")
             # Check if config contains directly specified main
             # file.
-            specified_main_file = \
+            config_main_file = \
                 self.config_handler.get_main_file()
             # Check which contains entry point
             for file in founded_files:
                 # Check if file is THE file
-                if specified_main_file.lower() == Path(file).name:
+                if config_main_file \
+                        and config_main_file.lower() == Path(file).name:
                     all_main_files = []
                     all_main_files.append(str(file))
                     # Do I need to check for entry point?
@@ -197,7 +215,7 @@ class OtherProcessing(TypeOfPackage):
                         if re.search(ENTRY_POINT, file_read.read()):
                             all_main_files.append(str(file))
         except Exception as e:
-            logger.error("Search for main file failed. {%s}" % e)
+            logger.error("Search for main file failed. %s", e)
 
         return set(all_main_files)
 
@@ -207,12 +225,14 @@ class OtherProcessing(TypeOfPackage):
         Info is extracted from 'pyproject.toml' fiel.
         It helps to install the whole app."""
         root_folder = self.app_path
+        if app_path:
+            root_folder = app_path
         if self.app_path:
             glob_search = Path(self.app_path).joinpath("pyproject.toml")
             if glob_search.exists():
                 file = glob.glob(str(glob_search))
                 if file:
-                    packages = self.process_poetry_pyproject_file(file[-1])
+                    packages = self.process_pyproject_file(file[-1])
                     if packages:
                         root_folder = self.get_common_root_folder(
                             list(packages))
@@ -233,7 +253,8 @@ class OtherProcessing(TypeOfPackage):
             package_parents = list(Path(package).parents)
             if Path(package).joinpath(self.app_path).is_dir():
                 package_parents.append(Path(package))
-            for index in range(len(package_parents)):
+            # for index in range(len(package_parents)):
+            for index in enumerate(package_parents):
                 if str(package_parents[index]) != '.':
                     all_parents.append(str(package_parents[index]))
         if all_parents:
@@ -247,8 +268,8 @@ class OtherProcessing(TypeOfPackage):
                 common_folder = str(Path(self.app_path).joinpath(common_folder))
         return common_folder
 
-    def process_poetry_pyproject_file(self, file_path):
-        """Process potery pyproject file and search for included packages.
+    def process_pyproject_file(self, file_path):
+        """Process pyproject file and search for included packages.
 
         Params;
         file_path = path to pyproject file
@@ -270,7 +291,7 @@ class OtherProcessing(TypeOfPackage):
         return set(packages) if packages else None
 
     def load_file_content(self, file_path) -> str | None:
-        """Load file content and return it as str.add()
+        """Load file content and return it as str.
 
         Params:
         file_path = path to file

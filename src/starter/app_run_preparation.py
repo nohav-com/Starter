@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class AppPreparationAndRun():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         # Get context handler
         self.context_handler = kwargs.get("context_handler", None)
         # Get config handler
@@ -42,7 +42,7 @@ class AppPreparationAndRun():
             config_handler=self.config_handler,
             platform_handler=self.platform_handler)
 
-    def get_app_folder_from_environment(self):
+    def get_app_folder_from_environment(self) -> str | None:
         """Get app folder form environment structure."""
         if self.env_structure:
             return self.env_structure.get_path_app_folder()
@@ -57,7 +57,7 @@ class AppPreparationAndRun():
         self.platform_handler = platform.get_handler()
 
     def venv_preparation(self):
-        """Prepare venv and it content"""
+        """Prepare venv and it content."""
         if self.env_structure and self.platform_handler\
                 and self.context_handler:
             # Creating venv from scratch
@@ -73,20 +73,32 @@ class AppPreparationAndRun():
                 venv = UseExistingVenv(context_handler=self.context_handler)
                 venv.create()
 
-    def ready_and_start(self, start_fresh=False) -> bool:
-        """Check if venv needs to be changed. Set it and start app."""
+    def ready_and_start(self, start_fresh=False):
+        """Check if venv needs to be changed. Set it and start app.
+
+        Args:
+        start_fresh = flag for start over
+        """
         logger.info("installing app and starting it.")
-        next = self.other.install_and_start(
-            start_fresh, True)
-        next = self.setup.install_and_start(
-            start_fresh, next)
-        next = self.wheel.install_and_start(
-            start_fresh, next)
+        try:
+            should_continue = self.other.install_and_start(
+                start_fresh, True)
+            should_continue = self.setup.install_and_start(
+                start_fresh, should_continue)
+            should_continue = self.wheel.install_and_start(
+                start_fresh, should_continue)
+        except Exception as e:
+            # More messages than less
+            logger.error("Cannot install and start app. %s", e)
+            raise e
 
     def app_files_changed(self) -> bool:
-        """Check if files related to app to be started changed.add()
+        """Check if files related to app to be started changed.
 
         If app's files chnaged we have to update existing venv.
+
+        Returns:
+        True in case 'changed' otherwise False
         """
         # TODO
         # - more clever/advanced way how to say something changed.

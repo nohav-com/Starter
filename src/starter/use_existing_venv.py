@@ -1,7 +1,5 @@
-"""Use already existing venv for running the app."""
 import logging
 import venv
-# from pathlib import Path
 
 
 __all__ = ['UseExistingVenv']
@@ -11,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 
 class UseExistingVenv(venv.EnvBuilder):
-    def __init__(self, *args, **kwargs):
+    """Use already existing venv for running the app."""
+    def __init__(self, **kwargs):
         self.context_handler = kwargs.get("context_handler", None)
         self.context = None
         super().__init__()
@@ -21,7 +20,7 @@ class UseExistingVenv(venv.EnvBuilder):
         return self.context
 
     def ensure_directories(self):
-        """Do everything like parent method but for existing venv"""
+        """Do everything like parent method but for existing venv."""
         if self.context_handler:
             self.context_handler.load_context()
             self.context = self.context_handler.get_context()

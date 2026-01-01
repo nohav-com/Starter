@@ -4,14 +4,25 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def path_to_valid_path(path_to):
-    """Check if given path needs to be chnaged to different
-       valid path, because of platform"""
-    new_path = path_to
+def escape_string(string_to_escape):
+    """Check if given string needs to be 'escape/backslashed',
+    because of platform.add()
+
+    Args:
+    string_to_escape = string to escape
+
+    Returns:
+    Escaped string
+    """
+    new_string = string_to_escape
     try:
-        if re.search(r"\\", new_path):
+        if new_string and re.search(r"\\", new_string):
             # Replace "\" with "\\"
-            new_path = re.sub(r"\\", r"\\\\", new_path, flags=re.IGNORECASE)
+            new_string = re.sub(
+                r"\\",
+                r"\\\\",
+                new_string,
+                flags=re.IGNORECASE)
     except Exception as e:
-        logger.error("Problem with escaping backslashes. {%s}" % e)
-    return new_path
+        logger.error("Problem with escaping backslashes. %s", e)
+    return new_string

@@ -1,9 +1,7 @@
 """Class for processing the old school style requirements file(s)."""
 
-import glob
 import logging
 import re
-import os
 from pathlib import Path
 
 from .dummy_setup import DummySetup
@@ -15,8 +13,8 @@ from .common import (
 
 __all__ = ['SetupProcessing']
 
-FILES_CHANGED_FILTER = ["**/*.py"]
-REQUIRED_FILES_REGEX = "(.*)requirements(.*)"
+FILES_CHANGED_FILTER = ["*.py"]
+REQUIRED_FILES_REQUIREMENT_REGEX = "(.*)requirements(.*)"
 REQUIRED_FILES = ['setup.py']
 ENTRY_POINT = 'if __name__ == "__main__"'
 SETUP_INSTALLATION_ARGS = ["-m", "pip", "install", "-e", "."]
@@ -26,10 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 class SetupProcessing():
-    """This class doing searching, checking the app's requirements the old 
-       school way. Searching for file(s) 'requirements*,*'."""
+    """This class doing searching, checking the app's requirements the old
+       school way. Searching for file(s) '*requirements*,*'."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         self.app_path = kwargs.get("app_path", None)
         self.config_handler = kwargs.get("config_handler", None)
         self.platform_handler = kwargs.get("platform_handler", None)
@@ -40,13 +38,21 @@ class SetupProcessing():
                           start_fresh=False,
                           continue_processing=True
                           ) -> bool:
-        """Install dependencies, app and start it"""
-        next = True
+        """Install dependencies, app and start it.
+
+        Args:
+        start_fresh = clear the environment and install it again
+        continue_processing = flag signaling 'try to install and start'
+
+        Returns:
+        True in case to signal next in the chain should countinue to
+        try to install and start.
+        """
+        should_continue = continue_processing
         if continue_processing and self.it_is_me():
             # Check if we are to suppose to install
             if start_fresh and self.platform_handler:
-                next = False
-                # Store current list to config file
+                should_continue = False
                 current_list = get_list_of_files_and_timestamp(
                     self.app_path,
                     filters=FILES_CHANGED_FILTER + REQUIRED_FILES
@@ -67,10 +73,13 @@ class SetupProcessing():
                         self.get_install_args()
                     )
                 except Exception as e:
-                    logger.error("Installation of app failed. {%s}" % e)
+                    logger.error("Installation of app failed. %s", e)
+                    raise e
             if self.platform_handler:
                 # Start app
                 main_files = self.search_for_main_files()
+                # Exceptions list
+                exceptions_list = []
                 for item in main_files:
                     try:
                         # Get app params if exists
@@ -81,34 +90,38 @@ class SetupProcessing():
                             item,
                             app_params=app_params
                         )
-                        next = False
+                        # next = False
                     except Exception as e:
-                        logger.warning(
-                            "Attempt to start main file {%s} failed" % item)
-                        logger.warning("Problem was %s" % e)
+                        logger.error(
+                            "Attempt to start main file %s failed", item)
+                        exceptions_list.append(e)
+                        continue
+                # If amount of founded 'main' files is equal to catched
+                # exceptions --> raise error
+                if len(exceptions_list) == len(main_files):
+                    raise RuntimeError(
+                        """Could not properly start the app, because no valid
+                           'main file' has been discovered(other option).""")
+                should_continue = False
             else:
                 logger.warning("Cannot continue because unknown platform,\
                     during of setuptool's installation.")
-        else:
-            logger.info("Cannot continue with installing of app.")
-            next = True
 
-        return next
+        return should_continue
 
-    def refill_reload_variables_content(self, **kwargs):
-        """Take received variables content and set it."""
-        self.app_path = kwargs.get("app_path", self.app_path)
-        self.config_handler = kwargs.get(
-            "config_processing",
-            self.config_handler
-        )
+    # def refill_reload_variables_content(self, **kwargs):
+    #     """Take received variables content and set it."""
+    #     self.app_path = kwargs.get("app_path", self.app_path)
+    #     self.config_handler = kwargs.get(
+    #         "config_processing",
+    #         self.config_handler
+    #     )
 
     def files_changed(self):
         """Check if files/folders changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
         if previous_list and self.app_path:
-            # Get current list
             current_list = get_list_of_files_and_timestamp(
                 self.app_path,
                 filters=FILES_CHANGED_FILTER + REQUIRED_FILES
@@ -131,20 +144,15 @@ class SetupProcessing():
             changed = True
         return changed
 
-    def preprare_dummy_setup(self, **kwargs):
-        """Prepare dummy setup for installation."""
-        setup_path = None
-        try:
-            setup_path = self.setup_dummy.create_dummy_setup(
-                folder_to_create=kwargs.get("folder_to_create", None),
-                main_folder=kwargs.get("main_folder", None))
-        except Exception as e:
-            logger.error("Cannot prepare dummy setup file. {%s}" % e)
+    def search_for_main_files(self, folder_path=None) -> set:
+        """Search for main files.
 
-        return setup_path
+        Args:
+        folder_path = where to search
 
-    def search_for_main_files(self, folder_path=None):
-        """TBD"""
+        Returns:
+        Set of main files
+        """
         search_folder = self.app_path
         if folder_path:
             search_folder = folder_path
@@ -154,11 +162,12 @@ class SetupProcessing():
             founded_files = Path(search_folder).rglob("*.py")
             # Check if config contains directly specified main
             # file.
-            specified_main_file = \
+            config_main_file = \
                 self.config_handler.get_main_file()
             for file in founded_files:
                 # Check if file is THE file
-                if specified_main_file.lower() == Path(file).name:
+                if config_main_file\
+                        and config_main_file.lower() == Path(file).name:
                     all_main_files = []
                     all_main_files.append(str(file))
                     # Do I need to check for entry point?
@@ -168,11 +177,11 @@ class SetupProcessing():
                         if re.search(ENTRY_POINT, file_read.read()):
                             all_main_files.append(str(file))
         except Exception as e:
-            logger.error("Search for main file failed. {%s}" % e)
+            logger.error("Search for main file failed. %s", e)
         return set(all_main_files)
 
     def it_is_me(self) -> bool:
-        """Try to assume that this app can be installed via setuptools
+        """Try to assume that this app can be installed via setuptools.
 
         Searching for all file required by setuptools to be successfully
         installed.
@@ -184,7 +193,7 @@ class SetupProcessing():
         if Path(self.app_path).exists():
             root_files = Path(self.app_path).glob("*")
             required = [file for file in root_files if
-                        re.search(REQUIRED_FILES_REGEX, str(file.name))]
+                        re.search(REQUIRED_FILES[0], str(file.name))]
             if required:
                 valid = True
 
@@ -192,6 +201,9 @@ class SetupProcessing():
 
     def find_setup_file(self, app_path=None):
         """Try to find setup.py file if exists.
+
+        Args:
+        app_path = where to serch for setup.py file
 
         Returns:
         Path to setup.py file or None
@@ -201,7 +213,7 @@ class SetupProcessing():
         if app_path:
             search_path = app_path
         if Path(search_path).exists():
-            setup_file_path = list(Path(search_path).glob("setup.py"))
+            setup_file_path = list(Path(search_path).glob(REQUIRED_FILES[0]))
             if setup_file_path:
                 setup_file_path = str(setup_file_path[0])
         return setup_file_path

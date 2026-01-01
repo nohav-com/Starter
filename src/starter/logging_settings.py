@@ -11,6 +11,7 @@ LOGGING_OUTPUT_FILE = "app_starter.log"
 
 
 def set_logging_settings():
+    "Set logging settings."
     handler = get_logging_handler()
     logging.basicConfig(
         handlers=[handler],
@@ -19,7 +20,7 @@ def set_logging_settings():
 
 
 def get_logging_handler():
-    """Settings of logging."""
+    """Settings for logging."""
     # Logging file destination
     log_destination = Path(__file__).parents[2].joinpath("app_starter.log")
 
@@ -29,7 +30,7 @@ def get_logging_handler():
        backupCount=3)
     # Formatter
     formatter = logging.Formatter(
-       '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+       '%(asctime)s - %(name)s -line: %(lineno)d - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
 
     return handler

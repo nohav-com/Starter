@@ -10,12 +10,13 @@ DEPENDENCIES_REGEX = "*requirement*"
 logger = logging.getLogger(__name__)
 
 
-def get_list_of_files_and_timestamp(folder_path, filters=[]) -> dict:
+def get_list_of_files_and_timestamp(folder_path, filters) -> dict:
     """Get list of files from given folder and timestamp of
        their latest change.
 
     Params:
     folder_path = path to folder to search
+    filters = list of required files(mandatory arg)
 
     Returns:
     Dict in format '<path_to_file>: <timestamp>'
@@ -23,8 +24,8 @@ def get_list_of_files_and_timestamp(folder_path, filters=[]) -> dict:
     files_dict = {}
 
     if folder_path and Path(folder_path).exists():
-        for filter in filters:
-            for item in Path(folder_path).rglob(filter):
+        for filter_item in filters:
+            for item in Path(folder_path).rglob(filter_item):
                 try:
                     if item:
                         timestamp = os.path.getmtime(item)
@@ -34,33 +35,45 @@ def get_list_of_files_and_timestamp(folder_path, filters=[]) -> dict:
                             files_dict[short_item[-1]] = timestamp
                 except Exception as e:
                     logger.info(
-                        "Problem with processing file {%s}, because {%s}" 
-                        % {item, e})
+                        "Problem with processing file %s, because %s",
+                        item, e)
                     continue
     return files_dict
 
 
-def get_all_dependencies_setuptools_approach(folder_path) -> set:
+def get_all_dependencies_setuptools_approach(
+        folder_path,
+        key=None
+        ) -> set:
     """Get the list of all dependencies using setuptools's style approach.
 
     That means search through folderpath and try to find all files name
     *dependencies* and process content of this files. Searching only
     on 'root' level of the folder.
+
+    Args:
+    folder_path = where to search
+    key = regex key for requirements file(default '*requirement*')
+
+    Returns:
+    List of depenencies
     """
-    # List if dict form <dependencie>: <version>
     dependencies = []
 
     if folder_path and Path(folder_path).exists():
-        # Search just 'root', level
-        files = Path(folder_path).glob(DEPENDENCIES_REGEX)
+        key_regex = DEPENDENCIES_REGEX
+        if key:
+            key_regex = key
+        files = None
+        files = Path(folder_path).glob(key_regex)
         if files:
             for file in files:
-                with open(str(file), "r") as requirement:
+                with open(str(file), "r", encoding='UTF-8') as requirement:
                     for line in requirement.readlines():
                         if line.strip() and not line.strip().startswith("#"):
                             # Line contains something
                             dependencies.append(line.strip())
     else:
-        logger.warning("Cannot search and process dependencies, because {%s}\
-                        doesn't exist." % folder_path)
+        logger.warning("Cannot search and process dependencies, because %s\
+                        doesn't exist.", folder_path)
     return set(dependencies)

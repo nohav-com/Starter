@@ -17,7 +17,7 @@ class PlatformHandler():
         self.set_platform_handler(**kwargs)
 
     def set_platform_handler(self, **kwargs):
-        """Set platform handler"""
+        """Set platform handler."""
         if platform.system().lower() == "windows":
             self.handler = WindowsPlatform(**kwargs)
         elif platform.system().lower() == "linux":

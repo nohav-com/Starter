@@ -26,13 +26,15 @@ if this_python < min_version:
 
 
 def monkeypatch_for_cert(tmpdir):
-    """Patches `pip install` to provide default certificate with the lowest priority.
+    """Patches `pip install` to provide default certificate with the lowest
+       priority.
 
-    This ensures that the bundled certificates are used unless the user specifies a
-    custom cert via any of pip's option passing mechanisms (config, env-var, CLI).
+    This ensures that the bundled certificates are used unless the user
+    specifies a custom cert via any of pip's option passing mechanisms
+    (config, env-var, CLI).
 
-    A monkeypatch is the easiest way to achieve this, without messing too much with
-    the rest of pip's internals.
+    A monkeypatch is the easiest way to achieve this, without messing too 
+    much with the rest of pip's internals.
     """
     from pip._internal.commands.install import InstallCommand
 
@@ -62,22 +64,25 @@ def pip_dependency(tmpdir):
         args = ["install", "--upgrade", "--force-reinstall", "pip"]
         pip_entry_point(args)
     except Exception as e:
+        print("Installation of pip failed because {%s}" % e)
         raise e
 
 
 def other_dependency(name):
-    """Install other dependency that pip"""
+    """Install other dependency that pip."""
     try:
         from pip._internal.cli.main import main as pip_entry_point
 
         args = ["install", "--upgrade", "--force-reinstall", name]
         pip_entry_point(args)
     except Exception as e:
+        print(
+            "Instllation of dependency: {%s} failed because {%s}" % (name, e))
         raise e
 
 
 def main(dependency):
-    """Prepare pip archive to be used for install
+    """Prepare pip archive to be used for install.
 
     The whole block and  logic is taken from:
     - https://github.com/pypa/get-pip
@@ -102,12 +107,15 @@ def main(dependency):
             # Run the bootstrap
             pip_dependency(tmpdir=tmpdir)
         finally:
+            print("Installation of pip finished.")
             # Clean up our temporary working directory
             if tmpdir:
                 shutil.rmtree(tmpdir, ignore_errors=True)
     elif dependency:
+        print("Installing dependency: {%s}." % dependency)
         # The rest
-        other_dependency(dependency)     
+        other_dependency(dependency)
+        print("Installation of dependency: %s finished." % dependency)
 
 
 PIP_DATA = b"""

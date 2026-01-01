@@ -15,7 +15,9 @@ setup(
 
 
 class DummySetup():
-    """Class for creating dummy setup.py required ny setupttols to install app."""
+    """
+    Class for creating dummy setup.py required ny setupttols to install app.
+    """
 
     def create_dummy_setup(self,
                            folder_to_create=None,
@@ -37,5 +39,5 @@ class DummySetup():
 
     def remove(self, setup_file=None):
         """Remove file(in our case setup file)."""
-        if setup_file:
+        if setup_file and Path(setup_file).exists():
             setup_file.unlink(True)

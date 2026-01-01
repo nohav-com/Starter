@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class CreateVenv(venv.EnvBuilder):
     """Create virtual environment and install what needs to be installed."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         self.progress = None
         self.verbose = True  # Always full output
         # Get context handler
@@ -20,7 +20,11 @@ class CreateVenv(venv.EnvBuilder):
         super().__init__()
 
     def post_setup(self, context):
-        """Basic operation like install minimal dependencies, store context."""
+        """Basic operation like install minimal dependencies, store context.
+        
+        Args:
+        context = current context(types.SimpleNamespace)
+        """
         # Move some files because of pyinstaller
         if self.platform_handler and self.context_handler:
             # Store context
@@ -28,7 +32,7 @@ class CreateVenv(venv.EnvBuilder):
             self.context_handler.load_context()
 
             self.platform_handler.pyinstaller_magic()
-
+            # Necessary
             self.platform_handler.install_dependency(
                 name="pip"
             )

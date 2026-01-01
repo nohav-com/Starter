@@ -22,12 +22,23 @@ logger = logging.getLogger(__name__)
 
 
 class EnvironmentStructure():
-    def __init__(self):
+    def __init__(self, **kwargs):
+        """Creates app's environment structure with folders, file.
+        
+        This structure is used to prepare venv for app to be started.add()
+        
+        Args:
+        app_environment_parent = Root folder where to locate the structure.
+                                 Its optional arg.
+        """
         self.app_venv_folder = None
         self.context_file = None
         self.config_file = None
         self.app_folder = None
         self.app_environment_folder = None
+        # Where the evironment folder will be placed
+        self.current_parent = kwargs.get(
+            "app_environment_parent", Path(__file__).parents[2])
 
     def prepare_env_structure(self):
         """Prepare a whole environment structure."""
@@ -38,11 +49,11 @@ class EnvironmentStructure():
             self.prepare_venv_folder()
             self.prepare_app_folder()
             logger.info(
-                "App environment prepared {%s}."
-                % self.get_path_app_environment_folder())
+                "App environment prepared %s.",
+                self.get_path_app_environment_folder())
         except Exception as e:
             logger.info(
-                "Could not fully prepare app env structure because {%s}" % e)
+                "Could not fully prepare app env structure because %s", e)
 
     def clear_environment(self):
         """Removes everything related to app environment."""
@@ -51,7 +62,7 @@ class EnvironmentStructure():
             logger.info("Environment successfully cleared")
         except Exception as e:
             logger.error(
-                "Could not clear the app environment because {%s}" % e)
+                "Could not clear the app environment because %s", e)
             
     def clear_environment_exclude_app_folder(self):
         """Clear environment, keep the app_folder."""
@@ -60,7 +71,9 @@ class EnvironmentStructure():
             self.remove_config_file()
             self.remove_venv_folder()
         except Exception as e:
-            logger.error("Problem with clearing enviroment {%s}" % e)
+            logger.error(
+                "Problem with clearing enviroment(exclude app_folder) {%s}",
+                e)
 
     def get_path_app_environment_folder(self):
         """Gets path to root app environment folder."""
@@ -74,20 +87,19 @@ class EnvironmentStructure():
 
     def prepare_app_environment_folder(self):
         """Prepare app root folder."""
-        current_parent = Path(__file__).parents[2]
-        self.app_environment_folder = current_parent.joinpath(
+        self.app_environment_folder = self.current_parent.joinpath(
             APP_ENVIRONMENT_FOLDER)
         if not self.app_environment_folder.exists():
             try:
                 self.app_environment_folder.mkdir()
                 logger.info(
-                    "App root folder {%s} created." 
-                    % self.app_environment_folder)
+                    "App root folder %s created.",
+                    self.app_environment_folder)
             except Exception as e:
                 logger.error(
-                    "Creation of app root folder {%s} failed. {%s}"
-                    % (self.app_environment_folder, e)
-                )
+                    "Creation of app root folder %s failed. %s",
+                    self.app_environment_folder,
+                    e)
 
     def get_path_venv_folder(self):
         """Returns path to app venv folder."""
@@ -97,25 +109,24 @@ class EnvironmentStructure():
         """Removes app venv folder and its content."""
         if self.app_venv_folder and self.app_venv_folder.exists():
             logger.info(
-                "Removing venv folder {%s}" % str(self.app_venv_folder))
+                "Removing venv folder %s", str(self.app_venv_folder))
             self.remove_item(self.app_venv_folder)
 
     def prepare_venv_folder(self):
         """Prepares folder for venv environment."""
-        current_parent = Path(__file__).parents[2]
-        self.app_venv_folder = current_parent.joinpath(
+        self.app_venv_folder = self.current_parent.joinpath(
             APP_ENVIRONMENT_FOLDER, VENV_FOLDER_NAME)
         if not self.app_venv_folder.exists():
             try:
                 self.app_venv_folder.mkdir()
-                logger.info("App venv folder created. {%s}" 
-                            % self.app_venv_folder)
+                logger.info("App venv folder created. %s",
+                            self.app_venv_folder)
             except Exception as e:
                 # Failed
                 self.app_venv_folder = None
                 logger.error(
-                    "Preparation of venv folder {%s} failed. {%s}" 
-                    % (self.app_venv_folder, e))
+                    "Preparation of venv folder %s failed. %s",
+                    self.app_venv_folder, e)
 
     def get_path_config_file(self):
         """Gets path to config file."""
@@ -124,7 +135,7 @@ class EnvironmentStructure():
     def remove_config_file(self):
         """Removes config file."""
         if self.config_file and self.config_file.exists():
-            logger.info("Removing config file {%s}" % str(self.config_file))
+            logger.info("Removing config file %s", str(self.config_file))
             self.remove_item(str(self.config_file))
 
     def prepare_config_file(self):
@@ -133,14 +144,13 @@ class EnvironmentStructure():
         It should contains info where the the app's file are located,
         what dependencies should be installed, etc.
         """
-        current_parent = Path(__file__).parents[2]
-        self.config_file = current_parent.joinpath(
+        self.config_file = self.current_parent.joinpath(
             APP_ENVIRONMENT_FOLDER, APP_STARTER_CONFIG_FILE)
         if not self.config_file.exists():
             try:
                 with open(str(self.config_file), "w") as config_in:
                     config_in.write(json.dumps(CONFIG_CONTENT, indent=4))
-                logger.info("Config file {%s} created" % self.config_file)
+                logger.info("Config file %s created", self.config_file)
             except Exception:
                 self.config_file = None
 
@@ -160,18 +170,17 @@ class EnvironmentStructure():
 
     def prepare_app_folder(self):
         """Prepare path do default app folder."""
-        current_parent = Path(__file__).parents[2]
-        self.app_folder = Path(current_parent).joinpath(
+        self.app_folder = self.current_parent.joinpath(
             APP_ENVIRONMENT_FOLDER, APP_DEFAULT_FOLDER)
         if not self.app_folder.exists():
             try:
                 self.app_folder.mkdir()
-                logger.info("App folder {%s} created." % self.app_folder)
+                logger.info("App folder %s created.",  self.app_folder)
             except Exception as e:
                 self.app_folder = None
                 logger.error(
-                    "Preparation of app folder {%s} failed. {%s}" 
-                    % (self.app_folder, e))
+                    "Preparation of app folder %s failed. %s", 
+                    self.app_folder, e)
 
     def get_path_context_file(self):
         """Gets path to contenxt file."""
@@ -183,29 +192,28 @@ class EnvironmentStructure():
             self.remove_item(str(self.context_file))
 
     def prepare_context_file(self):
-        """Prepare file and path for context content.add()
+        """Prepare file and path for context content.
 
         Returns:
         The path to file or None
         """
-        current_parent = Path(__file__).parents[2]
-        self.context_file = current_parent.joinpath(
+        self.context_file = self.current_parent.joinpath(
             APP_ENVIRONMENT_FOLDER, VENV_CONTEXT_FILE)
         if not self.context_file.exists():
             try:
                 with open(str(self.context_file), "w") as context_in:
                     context_in.write(json.dumps({}, indent=4))
-                logger.info("Context file {%s} prepared." % self.context_file)
+                logger.info("Context file %s prepared.", self.context_file)
             except Exception as e:
                 self.context_file = None
                 logger.error(
-                    "Creating of context file {%s} failed. {%s}" 
-                    % (self.context_file, e))
+                    "Creating of context file %s failed. %s",
+                    self.context_file, e)
 
     def folder_is_empty(self, folder_path, filter=[]) -> bool:
-        """Check if folder contains something
+        """Check if folder contains something.
 
-        Params:
+        Args:
         folder_path = folder to check
         filters = list of files to exclude from founded files/folders
 
@@ -224,22 +232,22 @@ class EnvironmentStructure():
         return empty
 
     def remove_item(self, item):
-        """Removes given item
+        """Removes given item.
 
-        Params:
+        Args:
         item = path to item to be removed(includes file, folders)
         """
         if item and Path(item).exists() and Path(item).is_dir():
             # Remove folder + content
             try:
                 shutil.rmtree(str(item))
-                logger.info("Folder {%s} successfully removed." % str(item))
+                logger.info("Folder %s successfully removed.", str(item))
             except Exception as e:
-                logger.error("Problem occurred in {%s}" % e)
+                logger.error("Problem occurred in %s", e)
         elif item and Path(item).exists() and Path(item).is_file():
             # Remove file
             try:
                 os.remove(str(item))
-                logger.info("File {%s} successfully removed." % str(item))
+                logger.info("File %s successfully removed.", str(item))
             except Exception as e:
-                logger.error("Problem occurred in {%s}" % e)
+                logger.error("Problem occurred in %s", e)

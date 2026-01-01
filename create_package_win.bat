@@ -12,9 +12,9 @@ CALL %venv%\\Scripts\\activate
 :: Install pyinstaller to created venv
 CALL pip install %pyinstaller%
 :: Create output using pyinstaller
-CALL pyinstaller src\\app_starter\\main_starter.py --add-data src\\app_starter\\maginician.py:. --add-data %venv%\\Scripts\\%python%.exe:.
+CALL pyinstaller src\\starter\\app_starter.py --add-data src\\starter\\maginician.py:. --add-data %venv%\\Scripts\\%python%.exe:.
 :: Rename python exe file related to your python version to default name
-SET current_python_path=dist\\main_starter\\_internal\\%python%.exe
+SET current_python_path=dist\\starter\\_internal\\%python%.exe
 SET new_python_name=python.exe
 IF EXIST %current_python_path% (
     REN %current_python_path% %new_python_name%
