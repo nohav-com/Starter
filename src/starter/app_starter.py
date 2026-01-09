@@ -1,14 +1,15 @@
-"""Main croosroad to start 'app starter'.add()
+"""Main croosroad to start 'app starter'.
 
 Processing args, init all required instance, etc.
 """
 import argparse
 import logging
 import sys
+
 from starter.app_run_preparation import AppPreparationAndRun
+from starter.common import escape_string
 from starter.config import ConfigHandler
 from starter.context import ContextHandler
-from starter.common import escape_string
 from starter.environment_structure import EnvironmentStructure
 from starter.logging_settings import set_logging_settings
 
@@ -16,22 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 def main_starter(app_path=None, clear_environment=False):
-    # Set logging settings
-    set_logging_settings()
+    try:
+        # Set logging settings
+        set_logging_settings()
 
-    logger.info("Startting app starter")
-
-    env_structure = EnvironmentStructure()
-    env_structure.prepare_env_structure()
-
-    # Argument clear_environment passed - clear the house
-    # Everything is removed(app_folder included as well)
-    if clear_environment:
-        env_structure.clear_environment()
-        # Create env structure - from scratch
+        logger.info("Startting app starter")
+        env_structure = EnvironmentStructure()
         env_structure.prepare_env_structure()
 
-    try:
+        # Argument clear_environment passed - clear the house
+        # Everything is removed(app_folder included as well)
+        if clear_environment:
+            env_structure.clear_environment()
+            # Create env structure - from scratch
+            env_structure.prepare_env_structure()
+        
         # Context handler
         context_handler = ContextHandler(
             context_file=env_structure.get_path_context_file()
@@ -61,7 +61,6 @@ def main_starter(app_path=None, clear_environment=False):
 
         start_fresh = app_preparation_and_run.app_files_changed()
 
-        # if clear_environment or app_preparation_and_run.app_files_changed():
         if start_fresh:
             logger.info("Fresh start - removing venv")
             env_structure.remove_venv_folder()
@@ -70,10 +69,11 @@ def main_starter(app_path=None, clear_environment=False):
         # Time to prepare and start the app, if its possible
         app_preparation_and_run.venv_preparation()
         app_preparation_and_run.ready_and_start(start_fresh)
-    except Exception as e:
-        logger.error("Problem with preparing venv for app %s", e)
-        logger.info("Removing almost everything(app folder excluded).")
-        env_structure.clear_environment_exclude_app_folder()
+    except Exception:
+        logger.error("Problem with preparing venv for app.")
+        # Clearing the whole app_environment(folder)
+        # logger.info("Removing almost everything(app folder excluded).")
+        # env_structure.clear_environment_exclude_app_folder()
 
 
 if __name__ == '__main__':

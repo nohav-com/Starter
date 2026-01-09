@@ -2,20 +2,21 @@
 
 import logging
 import re
+import traceback
 from pathlib import Path
 
-from .dummy_setup import DummySetup
-from .common import (
-    get_list_of_files_and_timestamp,
-    get_all_dependencies_setuptools_approach
+from starter.app_preparation_by_type.common import (
+    get_all_dependencies_setuptools_approach,
+    get_list_of_files_and_timestamp
 )
-
+from starter.app_preparation_by_type.dummy_setup import DummySetup
 
 __all__ = ['SetupProcessing']
 
 FILES_CHANGED_FILTER = ["*.py"]
 REQUIRED_FILES_REQUIREMENT_REGEX = "(.*)requirements(.*)"
-REQUIRED_FILES = ['setup.py']
+SETUP_FILE = 'setup.py'
+REQUIRED_FILES = [SETUP_FILE]
 ENTRY_POINT = 'if __name__ == "__main__"'
 SETUP_INSTALLATION_ARGS = ["-m", "pip", "install", "-e", "."]
 
@@ -59,27 +60,28 @@ class SetupProcessing():
                 )
                 if current_list:
                     self.config_handler.set_app_files(current_list)
-                # Setup tool approach --> *requirement*
-                dependencies = get_all_dependencies_setuptools_approach(
-                    self.app_path)
-                if dependencies:
-                    self.platform_handler.install_dependencies(
-                        dependencies
-                    )
-                # Install app
                 try:
+                    # Setup tool approach --> *requirement*
+                    dependencies = get_all_dependencies_setuptools_approach(
+                        self.app_path)
+                    if dependencies:
+                        self.platform_handler.install_dependencies(
+                            dependencies
+                        )
+                    # Install app
                     self.platform_handler.install_app(
                         self.app_path,
                         self.get_install_args()
                     )
                 except Exception as e:
+                    self.config_handler.remove_app_files()
                     logger.error("Installation of app failed. %s", e)
-                    raise e
+                    logger.error(traceback.format_exc())
+                    raise
             if self.platform_handler:
                 # Start app
                 main_files = self.search_for_main_files()
-                # Exceptions list
-                exceptions_list = []
+                exception_counter = 0
                 for item in main_files:
                     try:
                         # Get app params if exists
@@ -90,18 +92,20 @@ class SetupProcessing():
                             item,
                             app_params=app_params
                         )
-                        # next = False
-                    except Exception as e:
+                    except Exception:
                         logger.error(
-                            "Attempt to start main file %s failed", item)
-                        exceptions_list.append(e)
+                            "Attempt to start main file %s failed.",
+                            item)
+                        # Do we need just count of exceptions
+                        # themselves
+                        exception_counter += 1
                         continue
                 # If amount of founded 'main' files is equal to catched
                 # exceptions --> raise error
-                if len(exceptions_list) == len(main_files):
+                if exception_counter == len(main_files):
                     raise RuntimeError(
                         """Could not properly start the app, because no valid
-                           'main file' has been discovered(other option).""")
+                           'main file' has been discovered.""")
                 should_continue = False
             else:
                 logger.warning("Cannot continue because unknown platform,\
@@ -109,15 +113,7 @@ class SetupProcessing():
 
         return should_continue
 
-    # def refill_reload_variables_content(self, **kwargs):
-    #     """Take received variables content and set it."""
-    #     self.app_path = kwargs.get("app_path", self.app_path)
-    #     self.config_handler = kwargs.get(
-    #         "config_processing",
-    #         self.config_handler
-    #     )
-
-    def files_changed(self):
+    def files_changed(self) -> bool:
         """Check if files/folders changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
@@ -135,12 +131,7 @@ class SetupProcessing():
                 else:
                     changed = True
                     break
-        elif previous_list == []:
-            # Previous list is empty --> we are assuming this is first time
-            # running this script so keep rolling.
-            changed = False
-        else:
-            # Default --> no old list
+        elif not previous_list and self.app_path:
             changed = True
         return changed
 
@@ -157,25 +148,27 @@ class SetupProcessing():
         if folder_path:
             search_folder = folder_path
         all_main_files = []
-        # Get all .py files
         try:
-            founded_files = Path(search_folder).rglob("*.py")
-            # Check if config contains directly specified main
-            # file.
             config_main_file = \
                 self.config_handler.get_main_file()
-            for file in founded_files:
-                # Check if file is THE file
-                if config_main_file\
-                        and config_main_file.lower() == Path(file).name:
-                    all_main_files = []
+            if config_main_file:
+                # Lets find the file
+                founded_files = Path(search_folder).\
+                    rglob(config_main_file)
+                for file in founded_files:
                     all_main_files.append(str(file))
-                    # Do I need to check for entry point?
-                    break
-                else:
-                    with open(str(file), "r") as file_read:
-                        if re.search(ENTRY_POINT, file_read.read()):
-                            all_main_files.append(str(file))
+            else:
+                founded_files = Path(search_folder).rglob("*.py")
+                for file in founded_files:
+                    try:
+                        with open(str(file), "r") as file_read:
+                            if re.search(ENTRY_POINT, file_read.read()):
+                                all_main_files.append(str(file))
+                    except Exception as e:
+                        logger.error(
+                            "Search for main entry point in file '%s'\
+                            failed(%s).", file, e)
+
         except Exception as e:
             logger.error("Search for main file failed. %s", e)
         return set(all_main_files)
@@ -193,13 +186,13 @@ class SetupProcessing():
         if Path(self.app_path).exists():
             root_files = Path(self.app_path).glob("*")
             required = [file for file in root_files if
-                        re.search(REQUIRED_FILES[0], str(file.name))]
+                        re.search(SETUP_FILE, str(file.name))]
             if required:
                 valid = True
 
         return valid
 
-    def find_setup_file(self, app_path=None):
+    def find_setup_file(self, app_path=None) -> str | None:
         """Try to find setup.py file if exists.
 
         Args:
@@ -213,7 +206,7 @@ class SetupProcessing():
         if app_path:
             search_path = app_path
         if Path(search_path).exists():
-            setup_file_path = list(Path(search_path).glob(REQUIRED_FILES[0]))
+            setup_file_path = list(Path(search_path).glob(SETUP_FILE))
             if setup_file_path:
                 setup_file_path = str(setup_file_path[0])
         return setup_file_path

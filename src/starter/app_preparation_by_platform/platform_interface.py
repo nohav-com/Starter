@@ -1,7 +1,6 @@
 """Simple abstract class for classes defining platform."""
 from abc import ABC, abstractmethod
 
-
 __all__ = ['PlatformInterface']
 
 

@@ -1,9 +1,15 @@
 """Class contains everything related to differences by platform."""
 import logging
 import shutil
-from .common import CommonPreparationByPlatform
-from .platform_interface import PlatformInterface
+import traceback
 from pathlib import Path
+
+from starter.app_preparation_by_platform.common import (
+    CommonPreparationByPlatform
+)
+from starter.app_preparation_by_platform.platform_interface import (
+    PlatformInterface
+)
 
 __all__ = ['LinuxPlatform']
 
@@ -39,6 +45,8 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                             str(path_to_python.
                                 joinpath("python_default")))
                     elif file.is_file():
+                        if path_to.joinpath(file.name).exists():
+                            path_to.joinpath(file.name).unlink(missing_ok=True)
                         shutil.copyfile(
                             str(file),
                             str(path_to.joinpath(file.name)))
@@ -50,7 +58,9 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
         except Exception as e:
             logger.error(
                 """Application of pyinstaller's magic for linux platform
-                failed. %s""", e)
+                failed. '%s'.""", e)
+            logger.error(traceback.format_exc())
+            raise
 
     def install_dependencies(self, dependencies=[]):
         """Installl list of dependencies.
@@ -63,10 +73,10 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                 try:
                     self.install_dependency(dependency)
                 except Exception:
-                    logger.info("Installation of dependency %s failed.",
-                                dependency)
-                    # Keep rolling
-                    continue
+                    logger.error("Installation of dependency %s failed.",
+                                 dependency)
+                    logger.error(traceback.format_exc())
+                    raise
         else:
             logger.info("No dependencies to install(linux handler).")
 
@@ -91,6 +101,7 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                                     was successfully
                                     finished.""", current_maginician)
                 except Exception:
+                    # Try it different way because of  pyinstaller
                     current_maginician = str(Path(self.cwd).parents[1]
                                              .joinpath(maginician))
                     if Path(bin_path).exists():
@@ -111,10 +122,11 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                 else:
                     logger.error("""Script '%s' doesn't exist.""",
                                  future_maginician)
-            except Exception as e:
+            except Exception:
                 logger.error(
-                    "Cannot install dependency '%s'. Error: %s",
-                    name, e)
+                    "Cannot install dependency '%s'.", name)
+                logger.error(traceback.format_exc())
+                raise
         else:
             logger.info("No dependency to install(linux).")
 
@@ -129,7 +141,7 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
             else:
                 python = str(self.context_handler.get_context().env_exe)
 
-        return python
+        return python if python else None
 
     def install_app(self, cwd, app_args=[]):
         """Installing app itself.
@@ -156,8 +168,9 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                     logger.error(
                         "Cannot install app, no python.exe founded")
         except Exception as e:
-            logger.error("Installation of app failed. %s", e)
-            raise e
+            logger.error("Installation of app failed.(%e)", e)
+            logger.error(traceback.format_exc())
+            raise
 
     def start_app(self, cwd, main_path, app_params=None):
         """Start the app.
@@ -175,10 +188,12 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                     command.append(python)
                     command.append(main_path)
                     if app_params:
-                        command.append(app_params)
+                        command += app_params.split()
                     logger.info(
                         "Starting your app with %s.",
                         main_path)
                     self.start_of_app("app", command, cwd)
         except Exception as e:
-            raise e
+            logger.error("Start of app failed ar linux platform(%s).", e)
+            logger.error(traceback.format_exc())
+            raise

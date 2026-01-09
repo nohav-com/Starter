@@ -1,6 +1,6 @@
 import logging
+import traceback
 import venv
-
 
 __all__ = ['UseExistingVenv']
 
@@ -29,9 +29,14 @@ class UseExistingVenv(venv.EnvBuilder):
         """Hook to existing venv."""
         self.ensure_directories()
         if self.context:
-            self.setup_python(self.context)
-            self.setup_scripts(self.context)
-            self.post_setup()
+            try:
+                self.setup_python(self.context)
+                self.setup_scripts(self.context)
+                self.post_setup()
+            except Exception as e:
+                logger.error("Loading context of existing venv failed(%s).", e)
+                logger.error(traceback.format_exc())
+                raise
 
     def post_setup(self):
         """Let do something."""

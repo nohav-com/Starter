@@ -1,7 +1,6 @@
 """Simple abstract class for classes defining type of package classes."""
 from abc import ABC, abstractmethod
 
-
 __all__ = ['TypeOfPackage']
 
 
@@ -33,12 +32,3 @@ class TypeOfPackage(ABC):
         Returns:
         Path(s) to main file(s)
         """
-
-    # @abstractmethod
-    # def refill_reload_variables_content(self, **kwargs):
-    #     """Fill new content to variables which need to be reloaded.
-
-    #     Params:
-    #     Dict with all variables to be reloaded.
-    #     """
-    #     ...

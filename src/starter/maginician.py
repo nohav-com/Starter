@@ -4,12 +4,12 @@ Credit to:
 - https://github.com/pypa/get-pip
 - https://bootstrap.pypa.io/get-pip.py
 """
-import sys
+import argparse
 import os.path
 import pkgutil
 import shutil
+import sys
 import tempfile
-import argparse
 from base64 import b85decode
 
 this_python = sys.version_info[:2]
@@ -64,7 +64,7 @@ def pip_dependency(tmpdir):
         args = ["install", "--upgrade", "--force-reinstall", "pip"]
         pip_entry_point(args)
     except Exception as e:
-        print("Installation of pip failed because {%s}" % e)
+        print("Installation of pip failed because %s" % e)
         raise e
 
 
@@ -77,7 +77,7 @@ def other_dependency(name):
         pip_entry_point(args)
     except Exception as e:
         print(
-            "Instllation of dependency: {%s} failed because {%s}" % (name, e))
+            "Installation of dependency: %s failed because %s." % (name, e))
         raise e
 
 
@@ -112,7 +112,7 @@ def main(dependency):
             if tmpdir:
                 shutil.rmtree(tmpdir, ignore_errors=True)
     elif dependency:
-        print("Installing dependency: {%s}." % dependency)
+        print("Installing dependency: %s." % dependency)
         # The rest
         other_dependency(dependency)
         print("Installation of dependency: %s finished." % dependency)

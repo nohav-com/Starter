@@ -34,9 +34,9 @@ def get_list_of_files_and_timestamp(folder_path, filters) -> dict:
                         if short_item:
                             files_dict[short_item[-1]] = timestamp
                 except Exception as e:
-                    logger.info(
-                        "Problem with processing file %s, because %s",
-                        item, e)
+                    logger.error(
+                        "Problem with processing(get timestamp) file %s,\
+                        because %s", item, e)
                     continue
     return files_dict
 
@@ -68,12 +68,19 @@ def get_all_dependencies_setuptools_approach(
         files = Path(folder_path).glob(key_regex)
         if files:
             for file in files:
-                with open(str(file), "r", encoding='UTF-8') as requirement:
-                    for line in requirement.readlines():
-                        if line.strip() and not line.strip().startswith("#"):
-                            # Line contains something
-                            dependencies.append(line.strip())
+                try:
+                    with open(str(file), "r", encoding='UTF-8') as requirement:
+                        for line in requirement.readlines():
+                            if line.strip() and not line.strip()\
+                                    .startswith("#"):
+                                # Line contains something
+                                dependencies.append(line.strip())
+                except Exception as e:
+                    logger.error(
+                        "Processing file %s to get list of \
+                        dependencies failed(%s).",
+                        file, e)
     else:
-        logger.warning("Cannot search and process dependencies, because %s\
-                        doesn't exist.", folder_path)
+        logger.info("Cannot search and process dependencies, because %s\
+                    doesn't exist.", folder_path)
     return set(dependencies)

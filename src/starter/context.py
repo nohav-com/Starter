@@ -1,6 +1,6 @@
 """Class is managing everythin releated to context and context file."""
-import logging
 import json
+import logging
 import re
 import types
 from pathlib import Path
@@ -14,29 +14,30 @@ class ContextHandler():
     def __init__(self, *args, **kwargs):
         # TODO
         self.context_file = kwargs.get("context_file", None)
-        self.context = None
+        self.context = {}
         self.load_context()
 
     def get_context(self):
         """Return context object."""
         return self.context
 
-    def get_context_file(self):
+    def get_context_file(self) -> str:
         """Get full path to context file."""
         return self.context_file
 
     def set_context_file(self, context_file=None):
         """Set context file path.
-        
+
         Args:
         context_file = path to context file
         """
-        if context_file:
+        if context_file is not None:
             self.context_file = context_file
+            self.load_context()
 
-    def get_value_for_key(self, key):
+    def get_value_for_key(self, key) -> str | None:
         """Get value for specified key from context.
-        
+
         Args:
         key = key to search for (e.g. app_files)
         """
@@ -44,6 +45,18 @@ class ContextHandler():
         if key and self.context:
             value = self.context.get(key, None)
         return value
+
+    def set_value_for_key(self, key, value):
+        """Set value for specified key.add()
+
+        Args:
+        key = key to store value for
+        value = value to store
+        """
+        if key and value:
+            self.context[key] = value
+            self.store_context_to_file(self.context)
+            self.load_context()
 
     def store_context_to_file(self, context):
         """Store current context to file.
@@ -79,11 +92,11 @@ class ContextHandler():
                         context = types.SimpleNamespace()
                         for key, value in context_dict.items():
                             context.__setattr__(key, value)
-
             except Exception as e:
                 logger.error(
                     "Could not load stored context from file. %s", e)
+                raise
             # Load context to instance's variable
-            self.context = context
+            self.context = context if context else {}
         else:
             logger.warning("Context file is available(cannot be found).")

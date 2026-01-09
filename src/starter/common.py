@@ -4,7 +4,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def escape_string(string_to_escape):
+def escape_string(string_to_escape) -> str:
     """Check if given string needs to be 'escape/backslashed',
     because of platform.add()
 

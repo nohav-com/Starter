@@ -1,10 +1,7 @@
 """Class is managing everything related to config file."""
-import logging
 import json
+import logging
 from pathlib import Path
-from .environment_default_content.default_config_content import (
-    CONFIG_CONTENT
-)
 
 __all__ = ['ConfigHandler']
 
@@ -30,12 +27,13 @@ class ConfigHandler():
     def clean_config_file_from_not_required_items(self):
         """Remove all required items related to app, except app_folder."""
         if self.config:
-            new_config_content = CONFIG_CONTENT
+            new_config_content = {}
             for key, value in self.config.items():
                 if key in KEEP_KEYS and key in new_config_content:
                     new_config_content[key] = value
             self.set_config(new_config_content)
             self.save_config()
+            self.load_config()
 
     def set_config_file(self, config_file):
         """Set config file path.
@@ -45,8 +43,9 @@ class ConfigHandler():
         """
         if config_file:
             self.config_file = config_file
+            self.load_config()
 
-    def get_config_file(self):
+    def get_config_file(self) -> str | None:
         """Get path to config file"""
         return self.config_file
 
@@ -56,7 +55,7 @@ class ConfigHandler():
         Args:
         config = new config content(json object)
         """
-        if config:
+        if config is not None:
             self.config = config
 
     def get_config(self):
@@ -82,10 +81,16 @@ class ConfigHandler():
         values = value for 'app_files' key
         """
         key = CONFIG_APP_FILES
-        if key and value:
+        if key and value is not None:
             self.set_value_for_key(key, value)
 
-    def get_app_params(self):
+    def remove_app_files(self):
+        """Remove app files from config."""
+        key = CONFIG_APP_FILES
+        if key:
+            self.set_value_for_key(key, {})
+
+    def get_app_params(self) -> str | None:
         """Get app's parameters."""
         key = CONFIG_APP_PARAMS
         value = None
@@ -100,10 +105,10 @@ class ConfigHandler():
         value = value for 'app_params' key
         """
         key = CONFIG_APP_PARAMS
-        if key and value:
+        if key and value is not None:
             self.set_value_for_key(key, value)
 
-    def get_app_folder(self):
+    def get_app_folder(self) -> str | None:
         """Get app folder path."""
         key = CONFIG_APP_FOLDER
         value = None
@@ -118,10 +123,10 @@ class ConfigHandler():
         path = value for 'app_folder' key
         """
         key = CONFIG_APP_FOLDER
-        if key and path:
+        if key and path is not None:
             self.set_value_for_key(key, path)
 
-    def get_main_file(self):
+    def get_main_file(self) -> str | None:
         """Get app's main file."""
         key = CONFIG_SPECIFIED_MAIN_FILE
         value = None
@@ -136,7 +141,7 @@ class ConfigHandler():
         path = value for 'main_file' key
         """
         key = CONFIG_SPECIFIED_MAIN_FILE
-        if key and path:
+        if key and path is not None:
             self.set_value_for_key(key, path)
 
     def get_root_keys_from_config_object(self) -> list | None:
@@ -158,7 +163,7 @@ class ConfigHandler():
                     self.config = json.loads(config.read())
         except Exception as e:
             logger.error(
-                "Config file has not valid content, json format. %s", e)
+                "Config file has not a valid content, json format(%s).", e)
 
     def save_config(self):
         """Save config to file."""
@@ -173,9 +178,9 @@ class ConfigHandler():
                     config_out.write(json_out)
 
         except Exception as e:
-            logger.error("Saving config content to file failed. %s", e)
+            logger.error("Saving config content to file failed(%s).", e)
 
-    def get_value_for_key(self, key):
+    def get_value_for_key(self, key) -> str | None:
         """Get value for specified key from config.
 
         If key doesnt exists returns None.
@@ -199,49 +204,7 @@ class ConfigHandler():
         key = key to search for
         value = value to store
         """
-        if self.config is not None and key and value:
+        if self.config is not None and key and value is not None:
             self.config[key] = value
             self.save_config()
             self.load_config()
-
-    # def get_list_of_dependencies_for_app(self, key="app_dependencies") -> list:
-    #     """Gest list of dependencies stored for app. This list been installed
-    #        last time venv been prepared
-
-    #     Args:
-    #     key = key to search for
-
-    #     Returns:
-    #     If list is empty or no key exists, it return None, otherwise list of
-    #     dicts.
-    #     """
-    #     dependencies = []
-    #     if self.config and key and key in self.config:
-    #         for item in self.config[key]:
-    #             parts = item.split("==")
-    #             if parts:
-    #                 dependency = {}
-    #                 dependency[parts[0]] = ""
-    #                 if len(parts) == 2:
-    #                     dependency[parts[0]] = parts[-1]
-    #                 dependencies.append(dependency)
-
-    #     return dependencies
-
-    # def store_list_of_dependencies_for_app(self,
-    #                                        dependencies,
-    #                                        key="app_dependencies"):
-    #     """Store the list of dependencies for next time.
-
-    #     Args:
-    #     dependencies = list of dependencies to store.
-    #     key = key to store value for
-    #     """
-    #     if dependencies and key:
-    #         self.config[key] = []
-    #         for new_dependency in dependencies:
-    #             dependency = new_dependency.get("name", None)
-    #             dependency += "==" + new_dependency.get("version") if \
-    #                 dependency and new_dependency.get("version") else ""
-    #             self.config[key].append(dependency)
-    #         self.save_config()

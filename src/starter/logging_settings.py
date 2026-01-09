@@ -19,18 +19,31 @@ def set_logging_settings():
     )
 
 
-def get_logging_handler():
-    """Settings for logging."""
-    # Logging file destination
-    log_destination = Path(__file__).parents[2].joinpath("app_starter.log")
+def get_logging_handler(log_location=None) ->\
+        logging.handlers.RotatingFileHandler:
+    """Settings for logging.
 
-    handler = logging.handlers.RotatingFileHandler(
-       filename=str(log_destination),
-       maxBytes=1000000,
-       backupCount=3)
+    Args:
+    log_location = where the log is going to be stored
+    """
+    handler = None
     # Formatter
     formatter = logging.Formatter(
-       '%(asctime)s - %(name)s -line: %(lineno)d - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
+        '%(asctime)s - %(name)s -line: %(lineno)d - %(levelname)s - %(message)s')
+    try:
+        # Logging file destination
+        log_destination = Path(log_location).joinpath(LOGGING_OUTPUT_FILE)\
+                          if log_location else \
+                          Path(__file__).parents[2].joinpath(
+                              LOGGING_OUTPUT_FILE)
 
-    return handler
+        if log_destination:
+            handler = logging.handlers.RotatingFileHandler(
+                filename=str(log_destination),
+                maxBytes=1000000,
+                backupCount=3)
+            handler.setFormatter(formatter)
+    except Exception:
+        raise
+    finally:
+        return handler

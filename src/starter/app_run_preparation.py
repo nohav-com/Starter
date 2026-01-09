@@ -1,13 +1,15 @@
 """Main crossroad to prepare app to be started."""
 import logging
 from pathlib import Path
-from .app_preparation_by_platform.platform_handler import PlatformHandler
-from .app_preparation_by_type.other import OtherProcessing
-from .app_preparation_by_type.setup import SetupProcessing
-from .app_preparation_by_type.wheel import WheelProcessing
 
-from .create_venv import CreateVenv
-from .use_existing_venv import UseExistingVenv
+from starter.app_preparation_by_platform.platform_handler import (
+    PlatformHandler
+)
+from starter.app_preparation_by_type.other import OtherProcessing
+from starter.app_preparation_by_type.setup import SetupProcessing
+from starter.app_preparation_by_type.wheel import WheelProcessing
+from starter.create_venv import CreateVenv
+from starter.use_existing_venv import UseExistingVenv
 
 __all__ = ['AppPreparationAndRun']
 
@@ -47,6 +49,10 @@ class AppPreparationAndRun():
         if self.env_structure:
             return self.env_structure.get_path_app_folder()
 
+    def get_platform_handler(self):
+        """Get platfrom handler instance."""
+        return self.platform_handler
+
     def set_plaform_handler(self):
         """Initialize platform handler and get the instance."""
         platform = PlatformHandler(
@@ -54,24 +60,34 @@ class AppPreparationAndRun():
             cwd=Path(__file__),
             venv_folder=Path(self.env_structure.get_path_venv_folder())
         )
-        self.platform_handler = platform.get_handler()
+        # Get the specific handler
+        if platform:
+            self.platform_handler = platform.get_handler()
+        else:
+            logger.error("Cannot get platform handler.")
+            raise RuntimeError
 
     def venv_preparation(self):
         """Prepare venv and it content."""
         if self.env_structure and self.platform_handler\
                 and self.context_handler:
-            # Creating venv from scratch
-            if self.env_structure.folder_is_empty(
-                    self.env_structure.get_path_venv_folder()):
-                venv = CreateVenv(
-                    context_handler=self.context_handler,
-                    platform_handler=self.platform_handler)
-                venv.create(str(self.env_structure.get_path_venv_folder()))
-            # Loading existing venv
-            if not self.env_structure.folder_is_empty(
-                    self.env_structure.get_path_venv_folder()):
-                venv = UseExistingVenv(context_handler=self.context_handler)
-                venv.create()
+            try:
+                # Creating venv from scratch
+                if self.env_structure.folder_is_empty(
+                        self.env_structure.get_path_venv_folder()):
+                    venv = CreateVenv(
+                        context_handler=self.context_handler,
+                        platform_handler=self.platform_handler)
+                    venv.create(str(self.env_structure.get_path_venv_folder()))
+                # Loading existing venv
+                if not self.env_structure.folder_is_empty(
+                        self.env_structure.get_path_venv_folder()):
+                    venv = UseExistingVenv(
+                        context_handler=self.context_handler)
+                    venv.create()
+            except Exception as e:
+                logger.error("Problem with venv preparation(%s).", e)
+                raise
 
     def ready_and_start(self, start_fresh=False):
         """Check if venv needs to be changed. Set it and start app.
@@ -87,10 +103,9 @@ class AppPreparationAndRun():
                 start_fresh, should_continue)
             should_continue = self.wheel.install_and_start(
                 start_fresh, should_continue)
-        except Exception as e:
-            # More messages than less
-            logger.error("Cannot install and start app. %s", e)
-            raise e
+        except Exception:
+            logger.error("Cannot install and start app.")
+            raise
 
     def app_files_changed(self) -> bool:
         """Check if files related to app to be started changed.
@@ -100,9 +115,13 @@ class AppPreparationAndRun():
         Returns:
         True in case 'changed' otherwise False
         """
-        # TODO
-        # - more clever/advanced way how to say something changed.
-        setup = self.setup.files_changed()
-        wheel = self.wheel.files_changed()
-        other = self.other.files_changed()
-        return setup or wheel or other
+        # Its need to be done by "old-school-way", because "setup" can falsely
+        # detect changes over wheel packages(extra files/folders).
+        if self.wheel.it_is_me():
+            return self.wheel.files_changed()
+        elif self.other.it_is_me():
+            return self.other.files_changed()
+        elif self.setup.it_is_me():
+            return self.setup.files_changed()
+        else:
+            return False

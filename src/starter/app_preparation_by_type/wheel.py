@@ -1,16 +1,19 @@
 import glob
 import logging
 import re
+import shutil
+import traceback
 from pathlib import Path
-from .common import (
-    get_list_of_files_and_timestamp,
-    get_all_dependencies_setuptools_approach
-)
 
+from starter.app_preparation_by_type.common import (
+    get_all_dependencies_setuptools_approach,
+    get_list_of_files_and_timestamp
+)
 
 __all__ = ['WheelProcessing']
 
-FILES_CHANGED_FILTER = ['*.whl']
+FILE_INSTALL = '*.whl'
+FILES_CHANGED_FILTER = [FILE_INSTALL]
 PYTHON_FILE_REGEX = "*.py"
 ENTRY_POINT = 'if __name__ == "__main__"'
 WHEEL_INSTALLATION_ARGS = ["-m", "pip", "install"]
@@ -54,17 +57,14 @@ class WheelProcessing():
                 if current_list:
                     self.config_handler.set_app_files(
                         current_list)
-                # Install dependencies --> outher
-                # (dependencies related to app's dependencies)
-                # Get regex for files search
-                # req_files_regex = self.config_handler.get_extra_requirements()
-                dependencies = get_all_dependencies_setuptools_approach(
-                    self.app_path)
-                if dependencies:
-                    self.platform_handler.install_dependencies(
-                        dependencies
-                    )
                 try:
+                    # Install extra dependencies
+                    dependencies = get_all_dependencies_setuptools_approach(
+                        self.app_path)
+                    if dependencies:
+                        self.platform_handler.install_dependencies(
+                            dependencies
+                        )
                     # # Get installation file
                     if installation_file:
                         args = self.get_install_args()
@@ -76,8 +76,10 @@ class WheelProcessing():
                                 args
                             )
                 except Exception as e:
+                    self.config_handler.remove_app_files()
                     logger.error("Installation of app failed. %s", e)
-                    raise e
+                    logger.error(traceback.format_exc())
+                    raise
             # Can we continue
             if self.platform_handler and self.env_structure \
                     and installation_file:
@@ -86,9 +88,17 @@ class WheelProcessing():
                     self.env_structure.get_path_venv_folder(),
                     installation_file
                 )
+                # Copy all files placed in app folder besides wheel package
+                # to app cwd(folder where app is installer)
+                try:
+                    extra_files = self.get_extra_files()
+                    if extra_files:
+                        self.copy_extra_files(extra_files, app_cwd)
+                except Exception as e:
+                    logger.error("Problem with copying extra files(%s).", e)
+                    logger.error(traceback.format_exc())
                 if main_files:
-                    # Exceptions list
-                    exceptions_list = []
+                    exception_counter = 0
                     for item in main_files:
                         try:
                             # Get app params if exists
@@ -99,17 +109,22 @@ class WheelProcessing():
                                 item,
                                 app_params=app_params
                             )
-                        except Exception as e:
+                        except Exception:
                             logger.error(
                                 "Attempt to start main file %s failed",
                                 item)
-                            exceptions_list.append(e)
+                            exception_counter += 1
                             continue
-                    if len(exceptions_list) == len(main_files):
+                    if exception_counter == len(main_files):
                         raise RuntimeError(
                             """Could not properly start the app, because no
                                valid 'main file' has been
                                discovered(other option).""")
+                    should_countinue = False
+                else:
+                    logger.error(
+                        "Could not find any main files. Cannot start the app.")
+                    # No point to continue to next type
                     should_countinue = False
             else:
                 logger.warning("Cannot continue because unknown platform,\
@@ -117,7 +132,7 @@ class WheelProcessing():
 
         return should_countinue
 
-    def files_changed(self):
+    def files_changed(self) -> bool:
         """Check if files/folders changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
@@ -136,12 +151,7 @@ class WheelProcessing():
                 else:
                     changed = True
                     break
-        elif previous_list == []:
-            # Previous list is empty --> we are assuming this is first time
-            # running this script so keep rolling.
-            changed = False
-        else:
-            # Default --> no old list
+        elif not previous_list and self.app_path:
             changed = True
         return changed
 
@@ -160,54 +170,55 @@ class WheelProcessing():
         installed_app_folder = None
         app_name = app_file and Path(app_file).name
         if venv_path and Path(venv_path).exists():
-            lib_path = Path(venv_path).joinpath("lib")
-            if lib_path and Path(lib_path).exists():
-                # Lets get python folder
-                python_folder = glob.glob(str(Path(lib_path).joinpath("*")))
-                python_side_packages = python_folder and\
-                    Path(lib_path).joinpath(python_folder[0], "site-packages")
-                if python_side_packages.exists():
-                    # Search for app folder
-                    packages = glob.glob(
-                        str(python_side_packages.joinpath("*")))
-                    app_name_parts = app_name.split("-")
-                    real_app_name = app_name_parts[0]
-                    for part in range(1, len(app_name_parts)):
-                        matched = [folder for folder in packages if
-                                   Path(folder).name.lower() == real_app_name]
-                        if matched:
-                            installed_app_folder = matched[0]
-                            break
-                        real_app_name += "-" + str(part)
-                    # Lets search installed app folder
-                    if installed_app_folder:
+            try:
+                site_packages = Path(venv_path).rglob("lib/*/site-packages/*")
+                packages = []
+                for item in site_packages:
+                    packages.append(item)
+
+                # Name of app derived from wheel package name --> installed
+                # packages/modules match
+                # Split name of wheel to parts by dash
+                app_name_parts = app_name.split("-")
+                matched_app_folder_name = app_name_parts.pop(0)
+                # Continue
+                for part in app_name_parts:
+                    match = [package for package in packages if
+                             Path(package).name.lower() ==
+                             matched_app_folder_name]
+                    if match:
+                        installed_app_folder = match[0]
+                        break
+                    matched_app_folder_name += "-" + part
+                # Lets search for main files
+                if installed_app_folder:
+                    config_main_file = \
+                        self.config_handler.get_main_file()
+                    if config_main_file:
+                        # Lets find the file
+                        founded_files = Path(installed_app_folder).\
+                            rglob(config_main_file)
+                        for file in founded_files:
+                            all_main_files.append(str(file))
+                    else:
+                        # Find all relevant files
                         founded_files = Path(installed_app_folder).\
                             rglob(PYTHON_FILE_REGEX)
-                        # Check if config contains directly specified main
-                        # file.
-                        config_main_file = \
-                            self.config_handler.get_main_file()
                         for file in founded_files:
-                            # Check if file is THE file
-                            if config_main_file \
-                                    and config_main_file.lower() \
-                                    == Path(file).name:
-                                all_main_files = []
-                                all_main_files.append(str(file))
-                                # Do I need to check for entry point?
-                                break
-                            # else:
-                            #     with open(str(file), "r") as file_read:
-                            #         if re.search(
-                            #                 ENTRY_POINT,
-                            #                 file_read.read()):
-                            #             all_main_files.append(str(file))
-                            # else:
-                            with open(str(file), "r") as file_read:
-                                if re.search(
-                                        ENTRY_POINT,
-                                        file_read.read()):
-                                    all_main_files.append(str(file))
+                            try:
+                                with open(str(file), "r") as file_read:
+                                    if re.search(
+                                            ENTRY_POINT,
+                                            file_read.read()):
+                                        all_main_files.append(str(file))
+                            except Exception as e:
+                                logger.error(
+                                    "Search for main entry point in file\
+                                        '%s' failed(%s).", file, e)
+            except Exception as e:
+                logger.error(
+                    "Failed to find main file to start the app(%).", e)
+                logger.error(traceback.format_exc())
 
         return (set(all_main_files), installed_app_folder)
 
@@ -237,12 +248,35 @@ class WheelProcessing():
 
         return valid
 
-    def get_app_file(self):
+    def get_app_file(self) -> str | None:
         """Get app file(wheel file)."""
         file = None
         if self.app_path and Path(self.app_path).exists():
             file = glob.glob(
-                str(Path(self.app_path).joinpath(FILES_CHANGED_FILTER[0])))
+                str(Path(self.app_path).joinpath(FILE_INSTALL)))
             if file:
                 file = file[0]
         return file
+
+    def get_extra_files(self) -> list:
+        """Get all extra files from app folder."""
+        files = []
+        if self.app_path and Path(self.app_path).exists():
+            app_file_whl = self.get_app_file()
+            for file in glob.glob(str(Path(self.app_path).joinpath("*"))):
+                if app_file_whl != file:
+                    files.append(file)
+        return files
+
+    def copy_extra_files(self, extra_files: list, destination: str):
+        """Copy extra files/folders to app folder."""
+        if extra_files and destination:
+            for file in extra_files:
+                destination_file = Path(destination).joinpath(
+                                   Path(file).name)
+                if Path(file).is_file():
+                    if destination_file.exists():
+                        destination_file.unlink(missing_ok=True)
+                    shutil.copyfile(file, destination_file)
+                elif Path(file).is_dir():
+                    shutil.copytree(file, destination_file, dirs_exist_ok=True)

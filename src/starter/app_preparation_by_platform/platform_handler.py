@@ -1,9 +1,9 @@
 """Discovers what handler needs to be used based on platform"""
 import logging
 import platform
-from .linux import LinuxPlatform
-from .windows import WindowsPlatform
 
+from starter.app_preparation_by_platform.linux import LinuxPlatform
+from starter.app_preparation_by_platform.windows import WindowsPlatform
 
 __all__ = ['PlatformHandler']
 
