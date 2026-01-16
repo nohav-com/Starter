@@ -1,5 +1,5 @@
 """
-The simple and easier way to set configuration fot logging
+The simple and easier way to set configuration for logging
 (because distribution by pyinstaller, avoid distribution
 of extra config file).
 """
