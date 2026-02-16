@@ -1,7 +1,9 @@
-"""Main croosroad to start 'app starter'.
+# -*- coding: utf-8 -*-
+"""Main crossroad to start 'app starter'.
 
 Processing args, init all required instance, etc.
 """
+
 import argparse
 import logging
 import sys
@@ -31,7 +33,7 @@ def main_starter(app_path=None, clear_environment=False):
             env_structure.clear_environment()
             # Create env structure - from scratch
             env_structure.prepare_env_structure()
-        
+
         # Context handler
         context_handler = ContextHandler(
             context_file=env_structure.get_path_context_file()

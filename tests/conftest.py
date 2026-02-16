@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Global conftest."""
+
 import pytest
 import shutil
 from pathlib import Path

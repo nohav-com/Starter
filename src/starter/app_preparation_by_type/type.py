@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Simple abstract class for classes defining type of package classes."""
+
 from abc import ABC, abstractmethod
 
 __all__ = ['TypeOfPackage']

@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Class contains everything related to differences by platform."""
+
 import logging
 import shutil
 import traceback
@@ -194,6 +196,6 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                         main_path)
                     self.start_of_app("app", command, cwd)
         except Exception as e:
-            logger.error("Start of app failed ar linux platform(%s).", e)
+            logger.error("Start of app failed at linux platform(%s).", e)
             logger.error(traceback.format_exc())
             raise

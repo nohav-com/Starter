@@ -1,4 +1,6 @@
-"""Common methods"""
+# -*- coding: utf-8 -*-
+"""Common methods."""
+
 import logging
 from subprocess import PIPE, Popen
 
@@ -24,10 +26,14 @@ class CommonPreparationByPlatform():
                 logger.info("Installing '%s'.", name)
                 with Popen(args, stderr=PIPE, stdout=PIPE, cwd=cwd) as p:
                     stderr = p.stderr.read()
-                    logger.info(
-                        "Operation 'install' of %s finished(%s).",
-                        name,
-                        (stderr if stderr else ""))
+                    if stderr:
+                        logger.error(
+                            "Operation 'install' of %s failed(%s).",
+                            name, stderr)
+                    else:
+                        logger.info(
+                            "Operation 'install' of %s finished.",
+                            name)
             else:
                 logger.warning("""Cannot proceed with operation 'install'.
                                Some required params are missing
@@ -46,11 +52,20 @@ class CommonPreparationByPlatform():
         cwd = cwd where to run installation
         """
         if name and args and cwd:
-            with Popen(args, stderr=PIPE, stdout=PIPE, cwd=cwd) as p:
-                stderr = p.stderr.read()
+            try:
+                with Popen(args, stderr=PIPE, stdout=PIPE, cwd=cwd) as p:
+                    stderr = p.stderr.read()
+                    if stderr:
+                        logger.error(
+                            "Operation 'start of app' of %s failed(%s).",
+                            name, stderr)
+                    else:
+                        logger.info(
+                            "Operation 'start of app' of %s finished.",
+                            name)
+            except Exception as e:
                 logger.info(
-                    "Operation 'start' finished('%s').",
-                    (stderr if stderr else ""))
+                    "Try to start '%s' and failed(%s).", args, e)
         else:
             logger.warning("""Cannot properly start app.
                            Some required params are missing

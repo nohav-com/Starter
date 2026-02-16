@@ -1,4 +1,6 @@
-"""Discovers what handler needs to be used based on platform"""
+# -*- coding: utf-8 -*-
+"""Discovers what handler needs to be used based on platform."""
+
 import logging
 import platform
 

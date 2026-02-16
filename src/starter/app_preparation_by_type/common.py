@@ -1,6 +1,7 @@
-"""Common functions supporting modules for searching and processing 
-   requirements for given app.
-"""
+# -*- coding: utf-8 -*-
+"""Common functions supporting modules for searching and processing
+requirements for given app."""
+
 import logging
 import os
 from pathlib import Path
@@ -10,7 +11,7 @@ DEPENDENCIES_REGEX = "*requirement*"
 logger = logging.getLogger(__name__)
 
 
-def get_list_of_files_and_timestamp(folder_path, filters) -> dict:
+def get_list_of_files_and_timestamp(folder_path: str, filters) -> dict:
     """Get list of files from given folder and timestamp of
        their latest change.
 

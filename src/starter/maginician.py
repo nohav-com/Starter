@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
 """Simple, straight forward script to install dependencies.
 
 Credit to:
 - https://github.com/pypa/get-pip
 - https://bootstrap.pypa.io/get-pip.py
 """
+
 import argparse
 import os.path
 import pkgutil

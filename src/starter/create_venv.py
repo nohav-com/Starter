@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Prepare fresh, new venv for running the app."""
+
 import logging
 import venv
 

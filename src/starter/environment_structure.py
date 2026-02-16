@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Create, change, handle environment folder structure."""
 
 import json
@@ -6,7 +7,9 @@ import os
 import shutil
 from pathlib import Path
 
-from starter.environment_default_content.default_config_content import CONFIG_CONTENT
+from starter.environment_default_content.default_config_content import (
+    CONFIG_CONTENT
+)
 
 __all__ = ['EnvironmentStructure']
 
@@ -22,9 +25,9 @@ logger = logging.getLogger(__name__)
 class EnvironmentStructure():
     def __init__(self, **kwargs):
         """Creates app's environment structure with folders, file.
-        
+
         This structure is used to prepare venv for app to be started.add()
-        
+
         Args:
         app_environment_parent = Root folder where to locate the structure.
                                  Its optional arg.
@@ -169,7 +172,7 @@ class EnvironmentStructure():
 
     def set_path_app_folder(self, path: str):
         """Set path to app folder.
-        
+
         Args:
         path = Path to set
         """

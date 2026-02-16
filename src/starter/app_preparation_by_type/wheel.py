@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Class for wheel approach."""
+
 import glob
 import logging
 import re

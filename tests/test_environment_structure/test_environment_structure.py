@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Tests for preparing ven structure."""
+
 import shutil
 from pathlib import Path
 
@@ -238,11 +241,9 @@ def test_remove_item_folder(environment_structure_designated):
 def test_remove_item_fail(
         environment_structure_designated, tmp_path):
     """TNBD"""
-    # monkeypatch.setitem(EnvironmentStructure, "remove_item", Exception)
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
     env_struct.prepare_env_structure()
-    # monkeypatch.setitem(EnvironmentStructure, "remove_item", Exception)
     shutil.rmtree(root_location, ignore_errors=True)
     env_struct.remove_item(tmp_path)
 

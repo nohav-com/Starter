@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """For creating dummy setup.py so we can use setuptools for installation."""
+
 import logging
 from pathlib import Path
 
@@ -47,7 +49,11 @@ class DummySetup():
         return None
 
     def remove(self, setup_file=None):
-        """Remove file(in our case setup file)."""
+        """Remove file(in our case setup file).
+
+        Args:
+        setup_file = file to remove
+        """
         if setup_file and Path(setup_file).exists():
             # Remove
             setup_file.unlink(True)

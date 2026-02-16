@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Class managing already existing venv."""
+
 import logging
 import traceback
 import venv

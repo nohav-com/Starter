@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Main crossroad to prepare app to be started."""
+
 import logging
 from pathlib import Path
 

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Other processing, suing install tool, setup."""
+
 import glob
 import logging
 import re
@@ -175,7 +178,14 @@ class OtherProcessing(TypeOfPackage):
         return valid
 
     def search_for_main_files(self, folder_path=None) -> set:
-        """Search for main file along in the path to app's source code"""
+        """Search for main file along in the path to app's source code.
+
+        Args:
+        folder_path = path to folder to process
+
+        Returns:
+        Set of 'main' files.
+        """
         search_folder = self.app_path
         if folder_path:
             search_folder = folder_path
@@ -212,7 +222,11 @@ class OtherProcessing(TypeOfPackage):
         """Get to common root folder of all .py files.
 
         Info is extracted from 'pyproject.toml' file.
-        It helps to install the whole app."""
+        It helps to install the whole app.
+
+        Args:
+        app_path = path to app folder
+        """
         root_folder = self.app_path
         if app_path:
             root_folder = app_path

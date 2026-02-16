@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Context tests."""
+
 import json
 from pathlib import Path
 

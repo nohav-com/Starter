@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Tests for by_platform logic."""
+
 import platform
 
 from starter.app_preparation_by_platform.linux import LinuxPlatform

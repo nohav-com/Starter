@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Class for processing the old school style requirements file(s)."""
 
 import logging

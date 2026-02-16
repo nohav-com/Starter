@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""App preparation tests."""
+
 from pathlib import Path
 
 import pytest
@@ -65,6 +68,7 @@ def test_app_files_changed(app_run_preparation_instance):
     """Call app file changed method."""
     # Create some file
     app_folder = app_run_preparation_instance[1].get_path_app_folder()
+    # New file --> nothing to compare to
     file = Path(app_folder).joinpath("test.py")
     with open(str(file), "w") as f_in:
         f_in.write("#comment 1")

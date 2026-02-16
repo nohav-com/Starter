@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Common functions."""
+
 import logging
 import re
 

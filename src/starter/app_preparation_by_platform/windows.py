@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Class contains everything related to differences by platform."""
+
 import logging
 import re
 import shutil

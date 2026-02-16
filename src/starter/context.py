@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Class is managing everythin releated to context and context file."""
+
 import json
 import logging
 import re
@@ -12,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class ContextHandler():
     def __init__(self, *args, **kwargs):
-        # TODO
         self.context_file = kwargs.get("context_file", None)
         self.context = {}
         self.load_context()

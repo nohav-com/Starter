@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Test for dummy setup."""
+
 import os
 from pathlib import Path
 
@@ -27,8 +30,8 @@ def test_create_dummy_setup_file(dummy_setup_instance, tmp_path):
     assert dummy_setup_path
     assert dummy_setup_path.exists()
     dummy_setup_instance.remove(dummy_setup_path)
-    
-    
+
+
 def test_create_dummy_setup_file_fail(
         dummy_setup_instance, tmp_path, monkeypatch):
     """Creation of dummy setup file failed."""

@@ -1,0 +1,13 @@
+src/starter/__pycache__/*
+src/starter/app_preparation_by_platform/__pycache__/*
+src/starter/app_preparation_by_type/__pycache__/*
+src/starter/environment_default_content/__pycache__/*
+tests/__pycache__/*
+tests/*/__pycache__/*
+HOWTO.odt
+app_starter.*
+.coverage
+.gitignore.swp
+*.odt
+dist/*
+build/

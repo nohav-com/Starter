@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Test of config logic."""
+
 import json
 from pathlib import Path
 

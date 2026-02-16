@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 """Class is managing everything related to config file."""
+
 import json
 import logging
 from pathlib import Path
