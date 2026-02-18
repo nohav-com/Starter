@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class ContextHandler():
-    def __init__(self, *args, **kwargs):
+    def __init__(self, /, **kwargs):
         self.context_file = kwargs.get("context_file", None)
         self.context = {}
         self.load_context()
@@ -44,7 +44,7 @@ class ContextHandler():
         """
         value = None
         if key and self.context:
-            value = self.context.get(key, None)
+            value = self.context.__getattribute__(key)
         return value
 
     def set_value_for_key(self, key, value):
@@ -55,7 +55,7 @@ class ContextHandler():
         value = value to store
         """
         if key and value:
-            self.context[key] = value
+            self.context.__setattr__(key, value)
             self.store_context_to_file(self.context)
             self.load_context()
 
@@ -81,6 +81,38 @@ class ContextHandler():
                         context_in.write(json.dumps(context_object, indent=4))
             except Exception as e:
                 logger.error("Cannot store current context to file. %s", e)
+
+    def get_context_keys(self):
+        """Returns a list of keys from config."""
+        keys = None
+        try:
+            keys = [key for key in dir(self.context) if
+                    not re.search("__(.*)__", key)]
+        except Exception as e:
+            logger.warning("Can not get list of keys form context(%s).", e)
+        return keys
+
+    def alter_context(self, exe_file: str, pyinstaller_exe_name: str):
+        """Alter context's values.
+
+        Args:
+        exe_file = new exe file name
+        pyinstaller_exe_name = name to look for
+        Required by Windows platform.
+        """
+        if exe_file and pyinstaller_exe_name:
+            # Get all keys
+            keys = self.get_context_keys()
+            # print("keys:", keys)
+            # Start altering
+            for key in keys:
+                value = self.get_value_for_key(key)
+                # print("value:", value)
+                if Path(value).name == pyinstaller_exe_name:
+                    # Lets change it
+                    new_value = Path(value).parent.joinpath(exe_file)
+                    # print("new_value:", str(new_value))
+                    self.set_value_for_key(key, str(new_value))
 
     def load_context(self):
         """Load context from a file."""

@@ -31,6 +31,7 @@ class WheelProcessing():
         self.config_handler = kwargs.get("config_handler", None)
         self.platform_handler = kwargs.get("platform_handler", None)
         self.env_structure = kwargs.get("env_structure", None)
+        self.context_handler = kwargs.get("context_handler", None)
 
     def install_and_start(self,
                           start_fresh=False,
@@ -91,6 +92,15 @@ class WheelProcessing():
                     self.env_structure.get_path_venv_folder(),
                     installation_file
                 )
+                # Windows - side branch
+                if not main_files and self.context_handler:
+                    # Get root folder
+                    root_folder = self.context_handler.get_value_for_key(
+                        "python_dir")
+                    if root_folder:
+                        main_files, app_cwd = self.search_for_main_files(
+                            str(Path(root_folder).parent),
+                            installation_file)
                 # Copy all files placed in app folder besides wheel package
                 # to app cwd(folder where app is installer)
                 try:
@@ -112,10 +122,10 @@ class WheelProcessing():
                                 item,
                                 app_params=app_params
                             )
-                        except Exception:
+                        except Exception as e:
                             logger.error(
-                                "Attempt to start main file %s failed",
-                                item)
+                                "Attempt to start main file %s failed(%s).",
+                                item, e)
                             exception_counter += 1
                             continue
                     if exception_counter == len(main_files):
@@ -174,10 +184,17 @@ class WheelProcessing():
         app_name = app_file and Path(app_file).name
         if venv_path and Path(venv_path).exists():
             try:
-                site_packages = Path(venv_path).rglob("lib/*/site-packages/*")
-                packages = []
-                for item in site_packages:
-                    packages.append(item)
+                site_packages = list(
+                    Path(venv_path).rglob("lib/*/site-packages/*"))
+                site_packages = list(
+                    Path(venv_path).rglob("lib/site-packages/*")) if\
+                    not site_packages else site_packages
+                site_packages = list(
+                    Path(venv_path).rglob("Lib/*/site-packages/*")) if\
+                    not site_packages else site_packages
+                site_packages = list(
+                    Path(venv_path).rglob("Lib/site-packages/*")) if\
+                    not site_packages else site_packages
 
                 # Name of app derived from wheel package name --> installed
                 # packages/modules match
@@ -186,7 +203,7 @@ class WheelProcessing():
                 matched_app_folder_name = app_name_parts.pop(0)
                 # Continue
                 for part in app_name_parts:
-                    match = [package for package in packages if
+                    match = [package for package in site_packages if
                              Path(package).name.lower() ==
                              matched_app_folder_name]
                     if match:
@@ -209,7 +226,10 @@ class WheelProcessing():
                             rglob(PYTHON_FILE_REGEX)
                         for file in founded_files:
                             try:
-                                with open(str(file), "r") as file_read:
+                                with open(
+                                       str(file),
+                                       "r",
+                                       encoding='utf-') as file_read:
                                     if re.search(
                                             ENTRY_POINT,
                                             file_read.read()):
@@ -220,7 +240,7 @@ class WheelProcessing():
                                         '%s' failed(%s).", file, e)
             except Exception as e:
                 logger.error(
-                    "Failed to find main file to start the app(%).", e)
+                    "Failed to find main file to start the app(%s).", e)
                 logger.error(traceback.format_exc())
 
         return (set(all_main_files), installed_app_folder)

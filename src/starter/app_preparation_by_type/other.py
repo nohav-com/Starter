@@ -58,7 +58,6 @@ class OtherProcessing(TypeOfPackage):
         should_continue = continue_processing
         # Should we continue
         if continue_processing and self.it_is_me():
-            # Check if we are to suppose to install
             if start_fresh and self.platform_handler:
                 should_continue = False
                 current_list = get_list_of_files_and_timestamp(
@@ -111,7 +110,7 @@ class OtherProcessing(TypeOfPackage):
                 # Search for main files
                 main_files = self.search_for_main_files()
                 exception_counter = 0
-                for item in main_files:
+                for item in sorted(main_files):
                     try:
                         # Get app params if exists
                         app_params = self.config_handler.get_app_params()
@@ -121,10 +120,10 @@ class OtherProcessing(TypeOfPackage):
                             item,
                             app_params=app_params
                         )
-                    except Exception:
+                    except Exception as e:
                         logger.error(
-                            "Attempt to start main file %s failed.",
-                            item)
+                            "Attempt to start main file %s failed(%s).",
+                            item, e)
                         exception_counter += 1
                         continue
                 # If amount of founded 'main' files is equal to catched
@@ -243,7 +242,7 @@ class OtherProcessing(TypeOfPackage):
         except Exception as e:
             logger.error("Search for common root folder failed(%s).", e)
             raise
-            
+
         return root_folder
 
     def get_common_root_folder(self, packages_paths) -> str | None:

@@ -17,6 +17,7 @@ from starter.app_preparation_by_platform.platform_interface import (
 __all__ = ['WindowsPlatform']
 
 PYTHON_PYINSTALLER_NAME_WIN = "app_starter.exe"
+PYTHON_DEFAULT_NAME_WIN = "python_default.exe"
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,12 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                         shutil.copy(
                             str(file),
                             str(path_to_python.
-                                joinpath("python_default.exe")))
+                                joinpath(PYTHON_DEFAULT_NAME_WIN)))
+                        # Extra because of Windows and python >= 3.13
+                        shutil.copy(
+                            str(file),
+                            str(path_to_python.
+                                joinpath(file.name)))
                     elif file.is_file():
                         if path_to.joinpath(file.name).exists():
                             path_to.joinpath(file.name).unlink(missing_ok=True)
@@ -119,7 +125,7 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                     if python:
                         args = [python, str(future_maginician),
                                 "--dependency", name]
-                        self.install(name, args, bin_path)
+                        self.install(name, args, str(bin_path))
                     else:
                         logger.error(
                             "Cannot install app, no python.exe founded")
@@ -141,7 +147,7 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
             if Path(self.context_handler.get_context().env_exe).name.lower()\
                     == PYTHON_PYINSTALLER_NAME_WIN:
                 python = str(Path(self.context_handler.get_context().env_exe)
-                             .parent.joinpath("python_default.exe"))
+                             .parent.joinpath(PYTHON_DEFAULT_NAME_WIN))
             else:
                 python = str(self.context_handler.get_context().env_exe)
         return python if python else None
@@ -159,7 +165,6 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                 python = self.get_valid_python()
                 if python:
                     args = [python] + app_args
-                    # TODO
                     # Production --> force reinstall, upgrade
                     # args += ["--upgrade",
                     #          "--force-reinstall",
@@ -196,9 +201,21 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                         "Starting your app with %s.",
                         main_path)
                     self.start_of_app("app", command, cwd)
-                    # logger.info(
-                    #     "Start of app with {%s} was successful.")
+                    logger.info(
+                        "Start of app with {%s} was successful.")
         except Exception as e:
             logger.error("Start of app failed at windows platform(%s).", e)
             logger.error(traceback.format_exc())
             raise
+
+    def context_needs_to_be_altered(self) -> tuple:
+        """Returns status if context needs to be altered.
+
+        Returns:
+        Tuple with (alter, exe_name, pyinstaller_exe_name)
+        """
+        alter = False
+        if Path(self.context_handler.get_context().python_exe).name.lower()\
+                == PYTHON_PYINSTALLER_NAME_WIN:
+            alter = True
+        return (alter, PYTHON_DEFAULT_NAME_WIN, PYTHON_PYINSTALLER_NAME_WIN)

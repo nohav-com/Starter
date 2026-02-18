@@ -45,7 +45,6 @@ def get_logging_handler(log_location=None) ->\
                 maxBytes=1000000,
                 backupCount=3)
             handler.setFormatter(formatter)
+        return handler
     except Exception:
         raise
-    finally:
-        return handler

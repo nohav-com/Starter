@@ -21,6 +21,7 @@ KEEP_KEYS = ["app_folder", "main_file"]
 
 
 class ConfigHandler():
+    """Config handler."""
     def __init__(self, /, **kwargs):
         self.config_file = kwargs.get("config_file", None)
         self.config = None

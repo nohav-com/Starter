@@ -15,12 +15,14 @@ from starter.app_preparation_by_platform.platform_interface import (
 
 __all__ = ['LinuxPlatform']
 
-PYTHON_PYINSTALLER_NAME = "app_starter"
+PYTHON_PYINSTALLER_NAME_LINUX = "app_starter"
+PYTHON_DEFAULT_NAME_LINUX = "python_default"
 
 logger = logging.getLogger(__name__)
 
 
 class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
+    """Linux platform handler."""
     def __init__(self, /, **kwargs):
         self.context_handler = kwargs.get("context_handler", None)
         self.cwd = kwargs.get("cwd", None)
@@ -45,7 +47,7 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                         shutil.copy(
                             str(file),
                             str(path_to_python.
-                                joinpath("python_default")))
+                                joinpath(PYTHON_DEFAULT_NAME_LINUX)))
                     elif file.is_file():
                         if path_to.joinpath(file.name).exists():
                             path_to.joinpath(file.name).unlink(missing_ok=True)
@@ -137,9 +139,9 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
         python = None
         if self.context_handler and self.context_handler.get_context().env_exe:
             if Path(self.context_handler.get_context().env_exe).name.lower()\
-                    == PYTHON_PYINSTALLER_NAME:
+                    == PYTHON_PYINSTALLER_NAME_LINUX:
                 python = str(Path(self.context_handler.get_context().env_exe)
-                             .parent.joinpath("python_default"))
+                             .parent.joinpath(PYTHON_DEFAULT_NAME_LINUX))
             else:
                 python = str(self.context_handler.get_context().env_exe)
 
@@ -158,7 +160,6 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
                 python = self.get_valid_python()
                 if python:
                     args = [python] + app_args
-                    # TODO
                     # Production --> force reinstall, upgrade
                     # args += ["--upgrade",
                     #          "--force-reinstall",
@@ -199,3 +200,12 @@ class LinuxPlatform(PlatformInterface, CommonPreparationByPlatform):
             logger.error("Start of app failed at linux platform(%s).", e)
             logger.error(traceback.format_exc())
             raise
+
+    def context_needs_to_be_altered(self) -> tuple:
+        """Returns status if context needs to be altered.
+
+        Returns:
+        Tuple with (alter, exe_name, pyinstaller_exe_name) :)
+        """
+        alter = False
+        return (alter, None, None)

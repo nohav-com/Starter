@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 class CommonPreparationByPlatform():
     def __init__(self):
+        """Just pass."""
         pass
 
     def install(self, name, args, cwd):

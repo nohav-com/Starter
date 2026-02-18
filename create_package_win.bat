@@ -9,19 +9,18 @@ SET venv=starter_win
 CALL %python% -m venv %venv%
 :: Activate venv
 CALL %venv%\\Scripts\\activate
+:: Rename because python 3.12 vs. >=3.13
 :: Install pyinstaller to created venv
 CALL pip install %pyinstaller%
 :: Create output using pyinstaller
-CALL pyinstaller src\\starter\\app_starter.py --add-data src\\starter\\maginician.py:. --add-data %venv%\\Scripts\\%python%.exe:.
-:: Rename python exe file related to your python version to default name
-SET current_python_path=dist\\starter\\_internal\\%python%.exe
-SET new_python_name=python.exe
-IF EXIST %current_python_path% (
-    REN %current_python_path% %new_python_name%
-)
+CALL pyinstaller src\\starter\\app_starter.py --add-data %venv%\\pyvenv.cfg:. --add-data %venv%\\Scripts\\python.exe:. --add-data src\\starter\\maginician.py:.
+:: Copy pyvenv.cfg
+COPY /B dist\\app_starter\\_internal\\pyvenv.cfg dist\\pyvenv.cfg
+:: Copy python.exe --> app_starter
+COPY /B dist\\app_starter\\_internal\\python.exe dist\\app_starter\\python.exe /B
 :: Deativate venv
 CALL %venv%\\Scripts\\deactivate
 :: Remove venv
-::@RD /S /Q %venv%
+@RD /S /Q %venv%
 :: Clean console
 ::CLS

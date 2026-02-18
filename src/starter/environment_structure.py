@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create, change, handle environment folder structure."""
 
+import copy
 import json
 import logging
 import os
@@ -18,6 +19,7 @@ VENV_CONFIG_FILE = "app_starter_config.json"
 APP_DEFAULT_FOLDER = "app"
 VENV_CONTEXT_FILE = "context.json"
 APP_ENVIRONMENT_FOLDER = "app_environment"
+MAIN_FILE = "main_file"
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ class EnvironmentStructure():
         self.app_venv_folder = None
         self.context_file = None
         self.config_file = None
+        self.main_file = kwargs.get("main_file", None)
         self.app_folder = None
         self.app_environment_folder = None
         # Where the evironment folder will be placed
@@ -46,6 +49,7 @@ class EnvironmentStructure():
         try:
             self.prepare_app_environment_folder()
             self.prepare_config_file()
+            self.file_main_file_to_config_file()
             self.prepare_context_file()
             self.prepare_venv_folder()
             self.prepare_app_folder()
@@ -156,8 +160,10 @@ class EnvironmentStructure():
             APP_ENVIRONMENT_FOLDER, VENV_CONFIG_FILE)
         if not self.config_file.exists():
             try:
-                with open(str(self.config_file), "w") as config_in:
-                    config_in.write(json.dumps(CONFIG_CONTENT, indent=4))
+                config_content = copy.deepcopy(CONFIG_CONTENT)
+                with open(
+                        str(self.config_file), "w", encoding='utf-8') as f_in:
+                    f_in.write(json.dumps(config_content, indent=4))
                 logger.info("Config file %s created", self.config_file)
             except Exception as e:
                 self.config_file = None
@@ -165,6 +171,37 @@ class EnvironmentStructure():
                     "Problem with preparation of config file - \
                     default content(%s).", e)
                 raise
+
+    def file_main_file_to_config_file(self):
+        """Fill 'main_file' to config file.
+
+        Check if 'main_file' variable is set and try to set
+        it to config file.
+        """
+        if self.main_file and Path(self.config_file).exists():
+            try:
+                config_content = {}
+                # Lets try to read the content
+                with open(
+                        str(self.config_file), "r", encoding='utf-8') as f_out:
+                    config_content = json.loads(f_out.read())
+                if MAIN_FILE in config_content:
+                    # Lets try to set it
+                    with open(
+                            str(self.config_file),
+                            "w",
+                            encoding='utf-8') as f_in:
+                        config_content[MAIN_FILE] = self.main_file
+                        f_in.write(json.dumps(config_content, indent=4))
+                    logger.info(
+                        "The 'mani_file'= '%s' succesffully added.",
+                        self.main_file)
+                else:
+                    logger.info(
+                        "No key '%s' foundef in config file.", MAIN_FILE)
+            except Exception as e:
+                logger.warning(
+                    "Cannot add 'main_file' to config file(%s).", e)
 
     def get_path_app_folder(self) -> str | None:
         """Gets path to app folder."""
@@ -219,8 +256,9 @@ class EnvironmentStructure():
             APP_ENVIRONMENT_FOLDER, VENV_CONTEXT_FILE)
         if not self.context_file.exists():
             try:
-                with open(str(self.context_file), "w") as context_in:
-                    context_in.write(json.dumps({}, indent=4))
+                with open(
+                        str(self.context_file), "w", encoding='utf-8') as f_in:
+                    f_in.write(json.dumps({}, indent=4))
                 logger.info("Context file %s prepared.", self.context_file)
             except Exception as e:
                 self.context_file = None
@@ -228,7 +266,7 @@ class EnvironmentStructure():
                              self.context_file, e)
                 raise
 
-    def folder_is_empty(self, folder_path, filter=[]) -> bool:
+    def folder_is_empty(self, folder_path, filters=[]) -> bool:
         """Check if folder contains something.
 
         Args:
@@ -240,13 +278,12 @@ class EnvironmentStructure():
         """
         empty = True
         if folder_path and Path(folder_path).exists():
-            founded = os.listdir(folder_path)
-            if filter:
+            founded = list(Path(folder_path).glob("*"))
+            if filters:
                 founded = [file for file in os.listdir(folder_path)
-                           if Path(file).name not in filter]
+                           if Path(file).name not in filters]
             if founded:
                 empty = False
-
         return empty
 
     def remove_item(self, item):

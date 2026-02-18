@@ -32,6 +32,11 @@ class CreateVenv(venv.EnvBuilder):
                 # Store context
                 self.context_handler.store_context_to_file(context)
                 self.context_handler.load_context()
+                alter, exe_name, pyinst_exe_name = \
+                    self.platform_handler.context_needs_to_be_altered()
+                if alter and exe_name:
+                    self.context_handler.alter_context(
+                        exe_name, pyinst_exe_name)
 
                 self.platform_handler.pyinstaller_magic()
                 # Necessary

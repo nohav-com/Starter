@@ -18,13 +18,15 @@ from starter.logging_settings import set_logging_settings
 logger = logging.getLogger(__name__)
 
 
-def main_starter(app_path=None, clear_environment=False):
+def main_starter(app_path=None, clear_environment=False, main_file=None):
     try:
         # Set logging settings
         set_logging_settings()
 
         logger.info("Startting app starter")
-        env_structure = EnvironmentStructure()
+        env_structure = EnvironmentStructure(
+            main_file=main_file
+        )
         env_structure.prepare_env_structure()
 
         # Argument clear_environment passed - clear the house
@@ -62,17 +64,15 @@ def main_starter(app_path=None, clear_environment=False):
             env_structure=env_structure)
 
         start_fresh = app_preparation_and_run.app_files_changed()
-
         if start_fresh:
-            logger.info("Fresh start - removing venv")
             env_structure.remove_venv_folder()
             env_structure.prepare_venv_folder()
 
         # Time to prepare and start the app, if its possible
         app_preparation_and_run.venv_preparation()
         app_preparation_and_run.ready_and_start(start_fresh)
-    except Exception:
-        logger.error("Problem with preparing venv for app.")
+    except Exception as e:
+        logger.error("Problem with preparing venv for app(%s).", e)
         # Clearing the whole app_environment(folder)
         # logger.info("Removing almost everything(app folder excluded).")
         # env_structure.clear_environment_exclude_app_folder()
@@ -95,14 +95,21 @@ if __name__ == '__main__':
                         help='Flag to signal, clear environment\
                               (completely everything).',
                         default=False)
+    parser.add_argument('--main_file',
+                        dest='main_file',
+                        help='Specifying name of the manin file to start.',
+                        default="")
 
     options = parser.parse_args()
 
     app_folder = None
+    clear = None
+    main_file = None
 
     try:
         app_folder = options.app_path
         clear = options.clear_environment
+        main_file = options.main_file
     except Exception as e:
         # Something weng wrong, show me the error
         print("Error: %s", e)
@@ -111,7 +118,8 @@ if __name__ == '__main__':
     rc = 1
     try:
         main_starter(app_folder,
-                     clear)
+                     clear,
+                     main_file)
         rc = 0
     except Exception as e:
         print("Error:", e)

@@ -2,9 +2,9 @@
 name = "starter"
 version = "0.0.1"
 description = ""
-authors = [{ name = "Zdenek Novotny", email = "zdenekN61@gmail.com" }]
+authors = [{ name = "Zdenek Novotny", email = "nohav.com@gmail.com" }]
 readme = "README.md"
-requires-python = ">=3.12,<=3.15"
+requires-python = ">=3.12,<3.15"
 dependencies = []
 
 [tool.poetry]

@@ -93,10 +93,10 @@ class SetupProcessing():
                             item,
                             app_params=app_params
                         )
-                    except Exception:
+                    except Exception as e:
                         logger.error(
-                            "Attempt to start main file %s failed.",
-                            item)
+                            "Attempt to start main file %s failed(%s).",
+                            item, e)
                         # Do we need just count of exceptions
                         # themselves
                         exception_counter += 1
@@ -160,9 +160,10 @@ class SetupProcessing():
                     all_main_files.append(str(file))
             else:
                 founded_files = Path(search_folder).rglob("*.py")
-                for file in founded_files:
+                for file in sorted(founded_files):
                     try:
-                        with open(str(file), "r") as file_read:
+                        with open(
+                                str(file), "r", encoding='utf-') as file_read:
                             if re.search(ENTRY_POINT, file_read.read()):
                                 all_main_files.append(str(file))
                     except Exception as e:

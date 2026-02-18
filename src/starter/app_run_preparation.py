@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class AppPreparationAndRun():
+    """Manages all related to create venv, load existing one, etc."""
     def __init__(self, /, **kwargs):
         # Get context handler
         self.context_handler = kwargs.get("context_handler", None)
@@ -40,7 +41,8 @@ class AppPreparationAndRun():
             app_path=self.app_folder,
             config_handler=self.config_handler,
             platform_handler=self.platform_handler,
-            env_structure=self.env_structure)
+            env_structure=self.env_structure,
+            context_handler=self.context_handler)
         self.other = OtherProcessing(
             app_path=self.app_folder,
             config_handler=self.config_handler,

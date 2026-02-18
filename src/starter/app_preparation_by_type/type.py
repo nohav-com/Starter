@@ -7,7 +7,7 @@ __all__ = ['TypeOfPackage']
 
 
 class TypeOfPackage(ABC):
-
+    """Just simple interface."""
     @abstractmethod
     def it_is_me(self):
         """Check if app package/source code is my type.

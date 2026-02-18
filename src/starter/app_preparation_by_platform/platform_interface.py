@@ -54,3 +54,10 @@ class PlatformInterface(ABC):
         main_path = path to main file to be started
         app_params = params of app
         """
+
+    @abstractmethod
+    def context_needs_to_be_altered(self):
+        """Check if context needs to be altered.
+
+        Problem with windows and different behaviour.
+        """
