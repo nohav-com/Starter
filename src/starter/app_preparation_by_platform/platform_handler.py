@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Discovers what handler needs to be used based on platform."""
+"""Determines which handler needs to be used based on the platform."""
 
 import logging
 import platform
@@ -13,18 +13,18 @@ logger = logging.getLogger(__name__)
 
 
 class PlatformHandler():
-    """Basic wrapper around platform handler."""
+    """A basic wrapper around the platform handler."""
     def __init__(self, **kwargs):
         self.handler = None
         self.set_platform_handler(**kwargs)
 
     def set_platform_handler(self, **kwargs):
-        """Set platform handler."""
+        """Set the platform handler."""
         if platform.system().lower() == "windows":
             self.handler = WindowsPlatform(**kwargs)
         elif platform.system().lower() == "linux":
             self.handler = LinuxPlatform(**kwargs)
 
     def get_handler(self):
-        """Gets platform handler."""
+        """Gets the platform handler."""
         return self.handler

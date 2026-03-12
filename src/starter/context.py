@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Class is managing everythin releated to context and context file."""
+"""This class manages all operations related to the context and its file."""
 
 import json
 import logging
@@ -19,28 +19,28 @@ class ContextHandler():
         self.load_context()
 
     def get_context(self):
-        """Return context object."""
+        """Returns the current context object."""
         return self.context
 
     def get_context_file(self) -> str:
-        """Get full path to context file."""
+        """Returns the full path of the context file."""
         return self.context_file
 
     def set_context_file(self, context_file=None):
-        """Set context file path.
+        """Set the context file path.
 
         Args:
-        context_file = path to context file
+        context_file = path to the context file
         """
         if context_file is not None:
             self.context_file = context_file
             self.load_context()
 
-    def get_value_for_key(self, key) -> str | None:
-        """Get value for specified key from context.
+    def get_value_for_key(self, key: str) -> str | None:
+        """Returns the value associated with the given key in the context.
 
         Args:
-        key = key to search for (e.g. app_files)
+        key (str) = key to look up in the context(e.g. app_files)
         """
         value = None
         if key and self.context:
@@ -48,11 +48,11 @@ class ContextHandler():
         return value
 
     def set_value_for_key(self, key, value):
-        """Set value for specified key.add()
+        """Sets the value associated with the given key in the context.
 
         Args:
-        key = key to store value for
-        value = value to store
+        key = the key to store the value for
+        value = the value to store
         """
         if key and value:
             self.context.__setattr__(key, value)
@@ -60,14 +60,15 @@ class ContextHandler():
             self.load_context()
 
     def store_context_to_file(self, context):
-        """Store current context to file.
+        """Saves the current context object to the context file.
 
-        This context is going to be used when we are only changing venv
-        (reinstall app or reinstall dependencies) not creating fresh one.
-        Used in class 'use_existing_venv'
+        This context is applied when modifying the existing virtual
+        environment (such as reinstalling the app or dependencies),
+        not when creating a new one. Used in the 'use_existing_venv'
+        class.
 
         Args:
-        context = The context you wan tot store to file
+        context = the context object that you wish to store in a file.
         """
         if context:
             context_object = {}
@@ -80,25 +81,27 @@ class ContextHandler():
                     with open(str(self.context_file), "w") as context_in:
                         context_in.write(json.dumps(context_object, indent=4))
             except Exception as e:
-                logger.error("Cannot store current context to file. %s", e)
+                logger.error(
+                    "Failed to store the current context to the file: %s.", e)
 
     def get_context_keys(self):
-        """Returns a list of keys from config."""
+        """Returns a list of all keys present in the config file."""
         keys = None
         try:
             keys = [key for key in dir(self.context) if
                     not re.search("__(.*)__", key)]
         except Exception as e:
-            logger.warning("Can not get list of keys form context(%s).", e)
+            logger.warning(
+                "Failed to get the list of keys from the context (%s).", e)
         return keys
 
     def alter_context(self, exe_file: str, pyinstaller_exe_name: str):
-        """Alter context's values.
+        """Modify the values within the context.
 
         Args:
-        exe_file = new exe file name
-        pyinstaller_exe_name = name to look for
-        Required by Windows platform.
+        exe_file (str)= the name of the new executable file
+        pyinstaller_exe_name (str)= the name to look for in the search
+        This is required for the Windows platform.
         """
         if exe_file and pyinstaller_exe_name:
             # Get all keys
@@ -115,7 +118,7 @@ class ContextHandler():
                     self.set_value_for_key(key, str(new_value))
 
     def load_context(self):
-        """Load context from a file."""
+        """Loads the context object from the specified file."""
         context = None
         if self.context_file and Path(self.context_file).exists():
             try:
@@ -127,9 +130,10 @@ class ContextHandler():
                             context.__setattr__(key, value)
             except Exception as e:
                 logger.error(
-                    "Could not load stored context from file. %s", e)
+                    "Failed to load the stored context from the file: %s.", e)
                 raise
             # Load context to instance's variable
             self.context = context if context else {}
         else:
-            logger.warning("Context file is available(cannot be found).")
+            logger.warning(
+                "The context file is unavailable and cannot be found.")

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Prepare fresh, new venv for running the app."""
+"""Set up a new virtual environment to run the app."""
 
 import logging
 import venv
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class CreateVenv(venv.EnvBuilder):
-    """Create virtual environment and install what needs to be installed."""
+    """Set up a virtual environment and install the necessary packages."""
 
     def __init__(self, /, **kwargs):
         self.progress = None
@@ -21,10 +21,11 @@ class CreateVenv(venv.EnvBuilder):
         super().__init__()
 
     def post_setup(self, context):
-        """Basic operation like install minimal dependencies, store context.
+        """Basic tasks like installing minimal dependencies and saving
+        context.
 
         Args:
-        context = current context(types.SimpleNamespace)
+        context = the current context object (types.SimpleNamespace)
         """
         # Move some files because of pyinstaller
         if self.platform_handler and self.context_handler:
@@ -47,5 +48,5 @@ class CreateVenv(venv.EnvBuilder):
                     name="setuptools"
                 )
             except Exception as e:
-                logger.error("Attempt to create venv failed(%s).", e)
+                logger.error("Failed to create virtual environment (%s).", e)
                 raise

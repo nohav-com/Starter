@@ -8,14 +8,14 @@ logger = logging.getLogger(__name__)
 
 
 def escape_string(string_to_escape) -> str:
-    """Check if given string needs to be 'escape/backslashed',
-    because of platform.add()
+    """Check if the given string needs to be 'escaped' or 'backslashed'
+    because of the platform.
 
     Args:
-    string_to_escape = string to escape
+    string_to_escape = the string to escape
 
     Returns:
-    Escaped string
+    The escaped string
     """
     new_string = string_to_escape
     try:
@@ -27,5 +27,5 @@ def escape_string(string_to_escape) -> str:
                 new_string,
                 flags=re.IGNORECASE)
     except Exception as e:
-        logger.error("Problem with escaping backslashes. %s", e)
+        logger.error("Problem with escaping backslashes: %s.", e)
     return new_string

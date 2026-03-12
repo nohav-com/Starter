@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Simple abstract class for classes defining platform."""
+"""A simple abstract class for defining platform-specific classes."""
 
 from abc import ABC, abstractmethod
 
@@ -9,55 +9,55 @@ __all__ = ['PlatformInterface']
 class PlatformInterface(ABC):
     @abstractmethod
     def pyinstaller_magic(self):
-        """Logic and operations required by pyinstaller use."""
+        """The logic and operations required by PyInstaller usage."""
 
     @abstractmethod
-    def install_dependencies(self, dependencies=[]):
-        """Install list of dependencies.
+    def install_dependencies(self, dependencies: list = []):
+        """Install a list of dependencies.
 
         Args:
-        dependencies = list of dependencies
+        dependencies (list)= a list of dependencies
         """
 
     @abstractmethod
-    def install_dependency(self, name=None):
-        """Install dependency of given name.
+    def install_dependency(self, name: str | None = None):
+        """Install the dependency with given name.
 
         Args:
-        name = name of the dependency
+        name (str | None)= name of the dependency
         """
 
     @abstractmethod
     def get_valid_python(self):
         """
-        Get path to valid python (exe) file.
-        Distinguished by format of starter(dev vs. exe).
+        Get the path to valid python (exe) file.
+        Distinguished by the format of the starter(dev vs. exe).
         """
 
     @abstractmethod
-    def install_app(self, cwd, app_args=[]):
-        """Install app.
+    def install_app(self, cwd: str, app_args: list = []):
+        """Install the app.
 
         Args:
-        cwd = current working directory
-        app_args = install comamnd in list format
+        cwd (str)= the current working directory
+        app_args (list)= the install command in list format
             e.g.
             ['-m', 'pip', 'install', '-e', '.']
         """
 
     @abstractmethod
-    def start_app(self, cwd, main_path, app_params=None):
-        """Startr the app.
+    def start_app(self, cwd: str, main_path: str, app_params=None):
+        """Start the app.
 
         Args:
-        cwd = current working directory(e.g. app folder)
-        main_path = path to main file to be started
-        app_params = params of app
+        cwd (str)= the current working directory(e.g. app folder)
+        main_path (str)= path to the main file to be started
+        app_params = the params for the app
         """
 
     @abstractmethod
     def context_needs_to_be_altered(self):
-        """Check if context needs to be altered.
+        """Check if the context needs to be altered.
 
-        Problem with windows and different behaviour.
+        There may be a problem with Windows causing different behavior.
         """

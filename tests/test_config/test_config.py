@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Test of config logic."""
+"""Test of the config logic."""
 
 import json
 from pathlib import Path
 
 
 def test_create_config_handler(config_handler):
-    """Create confign handler."""
+    """Create a config handler."""
     assert Path(config_handler.get_config_file()).exists()
 
 
 def test_clean_config_file_from_not_required_items(config_handler):
-    """Strip config file from all not required keys+values."""
+    """Strip the config file from all unnecessary keys+ and values."""
     config_before = config_handler.get_config()
     config_handler.clean_config_file_from_not_required_items()
     config_after = config_handler.get_config()
@@ -19,14 +19,15 @@ def test_clean_config_file_from_not_required_items(config_handler):
 
 
 def test_set_get_config_file(config_handler, tmp_path):
-    """Set new config file path, try to get it and validate."""
+    """Set the new config file path, attepmt to get the path,
+    and validate it."""
     config_path = Path(tmp_path).joinpath("new_config.json")
     config_handler.set_config_file(str(config_path))
     assert config_handler.get_config_file() == str(config_path)
 
 
 def test_set_get_config(config_handler):
-    """Set config content, try to get it and validate."""
+    """Set the config content, attempt to get it, and validate it."""
     value = '{"key1": "value1"}'
     config_content = json.loads(value)
     config_handler.set_config(config_content)
@@ -36,12 +37,12 @@ def test_set_get_config(config_handler):
 
 
 def test_get_path_to_cofig_file(config_handler):
-    """Get path to config file."""
+    """Get the path to the config file."""
     assert Path(config_handler.get_path_to_config_file()).exists()
 
 
 def test_set_get_remove_app_files(config_handler):
-    """Set app files, get them -->validate, remove them + validate."""
+    """Set the app files, get them -->validate, remove them."""
     value = {"file": "file_timestamp"}
     config_handler.set_app_files(value)
     assert config_handler.get_app_files() == value
@@ -50,14 +51,14 @@ def test_set_get_remove_app_files(config_handler):
 
 
 def test_set_get_app_params(config_handler):
-    """Set app params and try to recover the and validate."""
+    """Set the app params, attempt to recover them, and validate."""
     value = "--test_param test1"
     config_handler.set_app_params(value)
-    assert config_handler.get_app_params() == value 
+    assert config_handler.get_app_params() == value
 
 
 def test_set_get_app_folder(config_handler, tmp_path):
-    """Set app folder path and try to recover it and validate."""
+    """Set the app folder path, attempt to recover it, and validate."""
     key = "app_folder"
     value = Path(tmp_path).joinpath(key)
     config_handler.set_app_folder(str(value))
@@ -65,7 +66,7 @@ def test_set_get_app_folder(config_handler, tmp_path):
 
 
 def test_set_get_main_file(config_handler, tmp_path):
-    """Set main file path and try to recover it and validate."""
+    """Set the main file path, attempt to recover it, and validate."""
     key = "main_file"
     value = Path(tmp_path).joinpath(key)
     config_handler.set_main_file(str(value))
@@ -73,7 +74,7 @@ def test_set_get_main_file(config_handler, tmp_path):
 
 
 def test_get_root_keys_from_config_object(config_handler):
-    """Get root keys from config file."""
+    """Get the root keys from the config file."""
     keys = config_handler.get_root_keys_from_config_object()
     assert keys
     # Add your own
@@ -85,7 +86,7 @@ def test_get_root_keys_from_config_object(config_handler):
 
 
 def test_set_get_value_for_key(config_handler):
-    """Set specific value for key and get back and validate."""
+    """Set a specific value for the key, get it, and validate."""
     key = "test"
     value = "test_value"
     config_handler.set_value_for_key(key, value)

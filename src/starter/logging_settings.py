@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-The simple and easier way to set configuration for logging
-(because distribution by pyinstaller, avoid distribution
-of extra config file).
+A simple and easy way to configure logging (useful when distributing
+with PyInstaller, as it avoids including an extra config file).
 """
 
 import logging
@@ -13,7 +12,7 @@ LOGGING_OUTPUT_FILE = "app_starter.log"
 
 
 def set_logging_settings():
-    "Set logging settings."
+    "Set the logging settings."
     handler = get_logging_handler()
     logging.basicConfig(
         handlers=[handler],
@@ -21,12 +20,12 @@ def set_logging_settings():
     )
 
 
-def get_logging_handler(log_location=None) ->\
+def get_logging_handler(log_location: str | None = None) ->\
         logging.handlers.RotatingFileHandler:
-    """Settings for logging.
+    """Logging settings.
 
     Args:
-    log_location = where the log is going to be stored
+    log_location (str|None) = where the log will be stored
     """
     handler = None
     # Formatter

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Other processing, suing install tool, setup."""
+"""Class for other approach, using install tool, setup."""
 
 import glob
 import logging
@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class OtherProcessing(TypeOfPackage):
-    """This class is doing searching, checking app's requirements if
-      poetry's style.
+    """This class handles searching and checking the app's requirements in
+    Poetry's style.
     """
 
     def __init__(self, /, **kwargs):
@@ -45,18 +45,18 @@ class OtherProcessing(TypeOfPackage):
                 self,
                 start_fresh=False,
                 continue_processing=True):
-        """Install dependencies, app and start it.
+        """Install dependencies, the app and start it.
 
         Args:
-        start_fresh = clear the environment and install it again
-        continoue_processing = flag signaling 'try to install and start'
+        start_fresh (bool) = flag to clear the environment and reinstall it
+        continoue_processing (bool)= flag signaling 'try to install and start'
 
         Returns:
-        True in case to signal next in the chain should countinue to
-        try to install and start.
+        True if the next step in the chain should continue to try to install
+        and start."
         """
         should_continue = continue_processing
-        # Should we continue
+        # Should we continue?
         if continue_processing and self.it_is_me():
             if start_fresh and self.platform_handler:
                 should_continue = False
@@ -64,11 +64,11 @@ class OtherProcessing(TypeOfPackage):
                     self.app_path,
                     filters=FILES_CHANGED_FILTER + REQUIRED_FILES
                 )
-                # Store app file info for next run
+                # Store the app file info for the next run
                 if current_list:
                     self.config_handler.set_app_files(current_list)
                 try:
-                    # Need to create setup.py --> to use setuptools
+                    # Need to create setup.py --> use setuptools
                     setup_file = Path(self.app_path).joinpath(
                         SETUP_FILE)
                     if not setup_file.exists():
@@ -78,7 +78,7 @@ class OtherProcessing(TypeOfPackage):
                         )
                     # Does the setup.py file exists?
                     if setup_file.exists():
-                        # Install extra dependencies
+                        # Install additonal dependencies
                         dependencies = \
                             get_all_dependencies_setuptools_approach(
                                 self.app_path)
@@ -90,17 +90,17 @@ class OtherProcessing(TypeOfPackage):
                             self.app_path,
                             self.get_install_args()
                         )
-                        # Remove dummy setup file
+                        # Remove the dummy setup file
                         self.setup_dummy.remove(setup_file)
                     else:
-                        # The setup.py file doesnt exist -> raise an error
+                        # If the setup.py file doesn't exist, raise an error
                         logger.error(
                             "The setup.py file doesn't exist at '%s'.",
                             setup_file)
                         raise RuntimeError
                 except Exception as e:
                     # Something went wrong --> clear the app files
-                    # Next run will be detected as fresh start
+                    # The next run will be detected as a fresh start
                     self.config_handler.remove_app_files()
                     logger.error("Installation of app failed. %s", e)
                     logger.error(traceback.format_exc())
@@ -176,11 +176,11 @@ class OtherProcessing(TypeOfPackage):
                     valid = True
         return valid
 
-    def search_for_main_files(self, folder_path=None) -> set:
+    def search_for_main_files(self, folder_path: str = None) -> set:
         """Search for main file along in the path to app's source code.
 
         Args:
-        folder_path = path to folder to process
+        folder_path (str)= path to folder to process
 
         Returns:
         Set of 'main' files.
@@ -217,14 +217,14 @@ class OtherProcessing(TypeOfPackage):
 
         return set(all_main_files)
 
-    def search_common_root_folder(self, app_path=None) -> str:
+    def search_common_root_folder(self, app_path: str = None) -> str:
         """Get to common root folder of all .py files.
 
         Info is extracted from 'pyproject.toml' file.
         It helps to install the whole app.
 
         Args:
-        app_path = path to app folder
+        app_path (str)= path to app folder
         """
         root_folder = self.app_path
         if app_path:
@@ -245,11 +245,11 @@ class OtherProcessing(TypeOfPackage):
 
         return root_folder
 
-    def get_common_root_folder(self, packages_paths) -> str | None:
+    def get_common_root_folder(self, packages_paths: list) -> str | None:
         """Get most common(intersection) root folder from list of paths
 
         Params:
-        packages_paths = list of paths
+        packages_paths (list)= list of paths
 
         Returns:
         The folder path
@@ -280,11 +280,11 @@ class OtherProcessing(TypeOfPackage):
 
         return common_folder
 
-    def process_pyproject_file(self, file_path) -> set | None:
+    def process_pyproject_file(self, file_path: str) -> set | None:
         """Process pyproject file and search for included packages.
 
         Params;
-        file_path = path to pyproject file
+        file_path (str)= path to pyproject file
 
         Returns:
         Set of unique paths or None
@@ -302,11 +302,11 @@ class OtherProcessing(TypeOfPackage):
 
         return set(packages) if packages else None
 
-    def load_file_content(self, file_path) -> str | None:
+    def load_file_content(self, file_path: str) -> str | None:
         """Load file content and return it as str.
 
         Params:
-        file_path = path to file
+        file_path (str)= path to file
 
         Returns:
         File content in str format or None

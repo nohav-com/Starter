@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Common functions supporting modules for searching and processing
-requirements for given app."""
+requirements for the given app."""
 
 import logging
 import os
@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 def get_list_of_files_and_timestamp(folder_path: str, filters) -> dict:
-    """Get list of files from given folder and timestamp of
-       their latest change.
+    """Get a list of files from the given folder and the timestamp of
+    their latest change.
 
     Params:
-    folder_path = path to folder to search
+    folder_path (str)= path to the folder to search
     filters = list of required files(mandatory arg)
 
     Returns:
-    Dict in format '<path_to_file>: <timestamp>'
+    A dict in format '<path_to_file>: <timestamp>'
     """
     files_dict = {}
 
@@ -36,28 +36,28 @@ def get_list_of_files_and_timestamp(folder_path: str, filters) -> dict:
                             files_dict[short_item[-1]] = timestamp
                 except Exception as e:
                     logger.error(
-                        "Problem with processing(get timestamp) file %s,\
-                        because %s", item, e)
+                        "Problem processing(get timestamp) for file %s,\
+                        because %s.", item, e)
                     continue
     return files_dict
 
 
 def get_all_dependencies_setuptools_approach(
-        folder_path,
-        key=None
+        folder_path: str,
+        key: str | None = None
         ) -> set:
-    """Get the list of all dependencies using setuptools's style approach.
+    """Get the list of all dependencies using setuptools-style approach.
 
-    That means search through folderpath and try to find all files name
-    *dependencies* and process content of this files. Searching only
-    on 'root' level of the folder.
+    This means searching through the folder path and looking for files
+    named *dependencies* to process their content. Search is performed
+    only at the 'root' level of the folder.
 
     Args:
-    folder_path = where to search
-    key = regex key for requirements file(default '*requirement*')
+    folder_path (str)= the path where to search
+    key (str)= the regex key for the requirements files(default is '*requirement*')
 
     Returns:
-    List of depenencies
+    A list of depenencies
     """
     dependencies = []
 
@@ -74,14 +74,14 @@ def get_all_dependencies_setuptools_approach(
                         for line in requirement.readlines():
                             if line.strip() and not line.strip()\
                                     .startswith("#"):
-                                # Line contains something
+                                # Line contains
                                 dependencies.append(line.strip())
                 except Exception as e:
                     logger.error(
-                        "Processing file %s to get list of \
+                        "Processing file %s to get the list of \
                         dependencies failed(%s).",
                         file, e)
     else:
-        logger.info("Cannot search and process dependencies, because %s\
+        logger.info("Cannot search and process dependencie because %s\
                     doesn't exist.", folder_path)
     return set(dependencies)

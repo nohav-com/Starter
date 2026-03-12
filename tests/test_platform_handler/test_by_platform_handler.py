@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for by_platform logic."""
+"""Tests for the by_platform logic."""
 
 import platform
 
@@ -14,9 +14,9 @@ def test_init():
     handler_instance = PlatformHandler(
         param_test="param_test"
     )
-    # Get handler
+    # Get the handler
     handler = handler_instance.get_handler()
-    # Test type - windows platform
+    # Test the type - windows platform
     if platform.system().lower() == "windows":
         assert isinstance(handler, WindowsPlatform)
     if platform.system().lower() == "linux":

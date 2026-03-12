@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Class contains everything related to differences by platform."""
+"""This class encapsulates all platform-specific differences and behaviors."""
 
 import logging
 import re
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
+    """Windows platform handler."""
     def __init__(self, /, **kwargs):
         self.context_handler = kwargs.get("context_handler", None)
         self.cwd = kwargs.get("cwd", None)
@@ -30,7 +31,7 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
         CommonPreparationByPlatform().__init__()
 
     def pyinstaller_magic(self):
-        """Logic tailored for pyinstaller."""
+        """Logic tailored for the PyInstaller."""
         try:
             _internal_from = self.cwd.parents[2].joinpath("_internal")
             path_to = self.venv_folder.joinpath("Scripts", "_internal")
@@ -39,9 +40,9 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                 shutil.rmtree(str(path_to))
             path_to.mkdir()
             if _internal_from.exists() and path_to.exists():
-                # Copy every file extra
+                # Copy every extra file
                 for file in _internal_from.iterdir():
-                    # We have rename python --> python_real
+                    # Rename the  python --> python_real
                     if file.is_file() \
                             and re.search("python(.*).exe", file.name)\
                             and not re.search("pythonw(.*).exe", file.name):
@@ -49,7 +50,7 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                             str(file),
                             str(path_to_python.
                                 joinpath(PYTHON_DEFAULT_NAME_WIN)))
-                        # Extra because of Windows and python >= 3.13
+                        # Extra copy because of Windows and Python=> 3.13
                         shutil.copy(
                             str(file),
                             str(path_to_python.
@@ -67,34 +68,35 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
 
         except Exception as e:
             logger.error(
-                """Application of pyinstaller's magic for linux platform
-                failed. %s""", e)
+                """The application of PyInstaller's magic for the Linux
+                platform failed: %s.""", e)
             logger.error(traceback.format_exc())
             raise
 
-    def install_dependencies(self, dependencies=[]):
-        """Installl list of dependencies.
+    def install_dependencies(self, dependencies: list = []):
+        """Installl the list of dependencies.
 
         Args:
-        dependencies = list of dependencies for installation
+        dependencies (list)= a list of dependencies to be installed
         """
         if dependencies:
             for dependency in dependencies:
                 try:
                     self.install_dependency(dependency)
                 except Exception:
-                    logger.info("Installation of dependency %s failed.",
+                    logger.info("Installation of dependency %s has failed.",
                                 dependency)
                     logger.error(traceback.format_exc())
                     raise
         else:
-            logger.info("No dependencies to install(linux handler).")
+            logger.info("No dependencies to install(windows handler).")
 
-    def install_dependency(self, name=None):
-        """Install dependency.
+    def install_dependency(self, name: list = None):
+        """Install a dependency.
 
         Args:
-        name = dependency to be installed (e.g. wheel==0.0.0 or wheel)
+        name (list)= the dependency to be installed
+                     (e.g. wheel==0.0.0 or wheel)
         """
         if name and self.context_handler:
             try:
@@ -102,24 +104,24 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                 maginician = "maginician.py"
                 future_maginician = Path(bin_path).joinpath(maginician)
                 try:
-                    # Copy from right source --> problem IDE vs. pyinstaller
+                    # Copy from the correct source --> IDE vs. PyInstaller
                     current_maginician = str(Path(self.cwd).parent.joinpath(
                         maginician))
                     if Path(bin_path).exists():
                         shutil.copy(current_maginician, bin_path)
-                        logger.info("""Copying 'maginician' script from '%s'
-                                    was successfully
-                                    finished.""", current_maginician)
+                        logger.info("""Copying the 'maginician' script from
+                                    '%s' was successfully
+                                    completed.""", current_maginician)
                 except Exception:
-                    # Try it different way because of  pyinstaller
+                    # Try a different approach because of PyInstaller
                     current_maginician = str(Path(self.cwd).parents[1]
                                              .joinpath(maginician))
                     if Path(bin_path).exists():
                         shutil.copy(current_maginician, bin_path)
-                        logger.info("""Copying 'maginician' script from '%s'
-                                    was successfully
-                                    finished.""", current_maginician)
-                # Put together args for installation
+                        logger.info("""Copying the 'maginician' script from
+                                    '%s' was successfully
+                                    completed.""", current_maginician)
+                # Prepare the args for installation
                 if future_maginician.exists():
                     python = self.get_valid_python()
                     if python:
@@ -128,9 +130,9 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                         self.install(name, args, str(bin_path))
                     else:
                         logger.error(
-                            "Cannot install app, no python.exe founded")
+                            "Cannot install the app: no python.exe found.")
                 else:
-                    logger.error("""Script '%s' doesn't exist.""",
+                    logger.error("""The script '%s' does not exist.""",
                                  future_maginician)
             except Exception as e:
                 logger.error(
@@ -138,10 +140,10 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                     name, e)
                 raise
         else:
-            logger.info("No dependency to install(linux).")
+            logger.info("No dependency to install(windows).")
 
     def get_valid_python(self) -> str:
-        """Get path to right python exe file."""
+        """Get the path to the correct Python .exe file."""
         python = None
         if self.context_handler and self.context_handler.get_context().env_exe:
             if Path(self.context_handler.get_context().env_exe).name.lower()\
@@ -152,12 +154,12 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                 python = str(self.context_handler.get_context().env_exe)
         return python if python else None
 
-    def install_app(self, cwd, app_args=[]):
-        """Installing app itself.
+    def install_app(self, cwd: str, app_args: list = []):
+        """Installing the app itself.
 
         Args:
-        cwd = working directory(e.g. app folder)
-        app_args = list of arguments for installation
+        cwd (str)= the working directory(e.g. app folder)
+        app_args (list)= a list of arguments for installation
                    e.g. ["-m", "pip", "install", "-e", "."]
         """
         try:
@@ -169,24 +171,26 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                     # args += ["--upgrade",
                     #          "--force-reinstall",
                     #          "--no-cache-dir"]
-                    logger.info("Installation of your app started.")
+                    logger.info(
+                        "The installation of your app have started.")
                     self.install("app", args, cwd)
-                    logger.info("Installation of your app finished.")
+                    logger.info(
+                        "The installation of your app is complete.")
                 else:
                     logger.error(
-                        "Cannot install app, no python.exe founded")
+                        "Cannot install the app, no python.exe found.")
         except Exception as e:
             logger.error("Installation of app failed(%s).", e)
             logger.error(traceback.format_exc())
             raise
 
-    def start_app(self, cwd, main_path, app_params=None):
+    def start_app(self, cwd: str, main_path: str, app_params=None):
         """Start the app.
 
         Args:
-        cwd = working directory(e.g. app_folder)
-        main_path = path to main file
-        app_params = params to start app with
+        cwd (str)= the working directory(e.g. app_folder)
+        main_path (str)= the path to the main file
+        app_params = the params to start the app with
         """
         try:
             if Path(main_path).exists() and Path(cwd).exists():
@@ -202,17 +206,18 @@ class WindowsPlatform(PlatformInterface, CommonPreparationByPlatform):
                         main_path)
                     self.start_of_app("app", command, cwd)
                     logger.info(
-                        "Start of app with {%s} was successful.")
+                        "The start of the app with {%s} was successful.")
         except Exception as e:
-            logger.error("Start of app failed at windows platform(%s).", e)
+            logger.error(
+                "The start of the app failed on the windows platform(%s).", e)
             logger.error(traceback.format_exc())
             raise
 
     def context_needs_to_be_altered(self) -> tuple:
-        """Returns status if context needs to be altered.
+        """Returns the status if the context needs to be altered.
 
         Returns:
-        Tuple with (alter, exe_name, pyinstaller_exe_name)
+        A tuple containing (alter, exe_name, pyinstaller_exe_name)
         """
         alter = False
         if Path(self.context_handler.get_context().python_exe).name.lower()\

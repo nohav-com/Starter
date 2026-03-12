@@ -2,11 +2,11 @@
 """Default config content.
 
 Content:
-app_files = dictionary of file "<file>": "<timestamp>"
-app_folder = path to app folder
-app_params = app params(app is started with these params)
-main_file = name of the main(easier to find the right one instead
-            of trying every founded options)
+app_files = dictionary of files with "<file>": "<timestamp>" format
+app_folder = path to the app folder
+app_params = parameters for the app(used when starting the app)
+main_file = name of the main file(easier to find the right one rather
+            than trying all options)
 """
 
 CONFIG_CONTENT = {

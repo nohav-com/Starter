@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Class for wheel approach."""
+"""Class for the wheel approach."""
 
 import glob
 import logging
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class WheelProcessing():
-    """Processing wheel package."""
+    """Processing the wheel package."""
     def __init__(self, /, **kwargs):
         self.app_path = kwargs.get("app_path", None)
         self.config_handler = kwargs.get("config_handler", None)
@@ -34,23 +34,23 @@ class WheelProcessing():
         self.context_handler = kwargs.get("context_handler", None)
 
     def install_and_start(self,
-                          start_fresh=False,
-                          continue_processing=True
+                          start_fresh: bool = False,
+                          continue_processing: bool = True
                           ) -> bool:
-        """Install dependencies, app and start it.
+        """Install dependencies, the app and start it.
 
         Args:
-        start_fresh = clear the environment and install it again
-        continoue_processing = flag signaling 'try to install and start'
+        start_fresh (bool)= clears the environment and reinstall the app
+        continoue_processing (bool)= flag signaling 'try to install and start'
 
         Returns:
-        True in case to signal next in the chain should countinue to
-        try to install and start.
+        True if the next step in the chain should continue to try installing
+        and starting the app.
         """
         should_countinue = continue_processing
         installation_file = None
         if continue_processing and self.it_is_me():
-            # Get installation file
+            # Gets the installation file
             installation_file = self.get_app_file()
             if self.config_handler and start_fresh:
                 should_countinue = False
@@ -62,61 +62,61 @@ class WheelProcessing():
                     self.config_handler.set_app_files(
                         current_list)
                 try:
-                    # Install extra dependencies
+                    # Install the additional dependencies
                     dependencies = get_all_dependencies_setuptools_approach(
                         self.app_path)
                     if dependencies:
                         self.platform_handler.install_dependencies(
                             dependencies
                         )
-                    # # Get installation file
+                    # Get the installation file
                     if installation_file:
                         args = self.get_install_args()
                         if args:
                             args.append(installation_file)
-                            # Install app
+                            # Install the app
                             self.platform_handler.install_app(
                                 self.app_path,
                                 args
                             )
                 except Exception as e:
                     self.config_handler.remove_app_files()
-                    logger.error("Installation of app failed. %s", e)
+                    logger.error("Installation of the app failed: %s.", e)
                     logger.error(traceback.format_exc())
                     raise
-            # Can we continue
+            # Can we continue?
             if self.platform_handler and self.env_structure \
                     and installation_file:
-                # Search for main file
+                # Search for the main file
                 main_files, app_cwd = self.search_for_main_files(
                     self.env_structure.get_path_venv_folder(),
                     installation_file
                 )
-                # Windows - side branch
+                # Windows - the 'side' branch
                 if not main_files and self.context_handler:
-                    # Get root folder
+                    # Get the root folder
                     root_folder = self.context_handler.get_value_for_key(
                         "python_dir")
                     if root_folder:
                         main_files, app_cwd = self.search_for_main_files(
                             str(Path(root_folder).parent),
                             installation_file)
-                # Copy all files placed in app folder besides wheel package
-                # to app cwd(folder where app is installer)
+                # Copy all files from the app folder, except the wheel package,
+                # to the app's cwd(where the app is installer)
                 try:
                     extra_files = self.get_extra_files()
                     if extra_files:
                         self.copy_extra_files(extra_files, app_cwd)
                 except Exception as e:
-                    logger.error("Problem with copying extra files(%s).", e)
+                    logger.error("Problem with copying additional files(%s).", e)
                     logger.error(traceback.format_exc())
                 if main_files:
                     exception_counter = 0
                     for item in main_files:
                         try:
-                            # Get app params if exists
+                            # Get the app params if they exists
                             app_params = self.config_handler.get_app_params()
-                            # Start app
+                            # Start the app
                             self.platform_handler.start_app(
                                 app_cwd,
                                 item,
@@ -124,38 +124,39 @@ class WheelProcessing():
                             )
                         except Exception as e:
                             logger.error(
-                                "Attempt to start main file %s failed(%s).",
+                                "Attempt to the start main file %s failed(%s).",
                                 item, e)
                             exception_counter += 1
                             continue
                     if exception_counter == len(main_files):
                         raise RuntimeError(
                             """Could not properly start the app, because no
-                               valid 'main file' has been
-                               discovered(other option).""")
+                               valid 'main file' was found.""")
                     should_countinue = False
                 else:
                     logger.error(
-                        "Could not find any main files. Cannot start the app.")
-                    # No point to continue to next type
+                        """Could not find any main files. Unnable to
+                        start the app.""")
+                    # No point in contiuning to the next type
                     should_countinue = False
             else:
-                logger.warning("Cannot continue because unknown platform,\
-                    during of wheel's installation.")
+                logger.warning(
+                    """Cannot continue due to an unknown platform
+                    during the wheel installation.""")
 
         return should_countinue
 
     def files_changed(self) -> bool:
-        """Check if files/folders changed."""
+        """Check if the files/folders have changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
         if previous_list and self.app_path:
-            # Get current list
+            # Get the current list
             current_list = get_list_of_files_and_timestamp(
                 self.app_path,
                 filters=FILES_CHANGED_FILTER
             )
-            # Check old list vs. current list
+            # Compare the old list with the current list
             for key, value in current_list.items():
                 if key in previous_list:
                     if previous_list[key] != value:
@@ -168,18 +169,18 @@ class WheelProcessing():
             changed = True
         return changed
 
-    def search_for_main_files(self, venv_path, app_file) -> tuple:
-        """Search for main file to be executed.
+    def search_for_main_files(self, venv_path: str, app_file: str) -> tuple:
+        """Search for the main file to execute.
 
         Args:
-        venv_path = path to venv folder
-        app_file = path to wheel file
+        venv_path (str)= path to the venv folder
+        app_file (str)= path to the wheel file
 
         Returns:
-        tuple = (set of main files, folder where the app is installed)
+        tuple = (set of the main files, folder where the app is installed)
         """
         all_main_files = []
-        # Installed app folder
+        # Foldet where the app is installed
         installed_app_folder = None
         app_name = app_file and Path(app_file).name
         if venv_path and Path(venv_path).exists():
@@ -196,9 +197,9 @@ class WheelProcessing():
                     Path(venv_path).rglob("Lib/site-packages/*")) if\
                     not site_packages else site_packages
 
-                # Name of app derived from wheel package name --> installed
-                # packages/modules match
-                # Split name of wheel to parts by dash
+                # Name of app is derived from the wheel package name
+                # --> installed packages/modules match
+                # Split the wheel name to parts using a dash
                 app_name_parts = app_name.split("-")
                 matched_app_folder_name = app_name_parts.pop(0)
                 # Continue
@@ -210,18 +211,18 @@ class WheelProcessing():
                         installed_app_folder = match[0]
                         break
                     matched_app_folder_name += "-" + part
-                # Lets search for main files
+                # Let's search for the main files
                 if installed_app_folder:
                     config_main_file = \
                         self.config_handler.get_main_file()
                     if config_main_file:
-                        # Lets find the file
+                        # Let's locate the file
                         founded_files = Path(installed_app_folder).\
                             rglob(config_main_file)
                         for file in founded_files:
                             all_main_files.append(str(file))
                     else:
-                        # Find all relevant files
+                        # Search for all relevant files
                         founded_files = Path(installed_app_folder).\
                             rglob(PYTHON_FILE_REGEX)
                         for file in founded_files:
@@ -236,22 +237,22 @@ class WheelProcessing():
                                         all_main_files.append(str(file))
                             except Exception as e:
                                 logger.error(
-                                    "Search for main entry point in file\
+                                    "Search for the main entry point in file\
                                         '%s' failed(%s).", file, e)
             except Exception as e:
                 logger.error(
-                    "Failed to find main file to start the app(%s).", e)
+                    "Failed to find the main file to start the app(%s).", e)
                 logger.error(traceback.format_exc())
 
         return (set(all_main_files), installed_app_folder)
 
     def get_install_args(self) -> list:
-        """Get args required for app installation.
+        """Get the args required for app installation.
 
         Example:
-        returned list of args --> ['-m', 'pip', 'install']
-        will be extended to format(for explanation)
-        <path_to_pathon> -m pip -install <file>
+        Returns the list of args --> ['-m', 'pip', 'install'].
+        This will be extended to the format(for explanation)
+        <path_to_path> -m pip -install <file>
 
         Returns:
         List of arguments.
@@ -259,10 +260,10 @@ class WheelProcessing():
         return WHEEL_INSTALLATION_ARGS
 
     def it_is_me(self) -> bool:
-        """Try to assume that this app can be installed via wheel.
+        """Attempt to assume that this app can be installed via a wheel.
 
         Returns:
-        In case yes, returns True, othewise False
+        True if it can be installed via wheel, otherwise False.
         """
         valid = False
         if self.app_path and Path(self.app_path).exists():
@@ -272,7 +273,7 @@ class WheelProcessing():
         return valid
 
     def get_app_file(self) -> str | None:
-        """Get app file(wheel file)."""
+        """Get the app file(wheel file)."""
         file = None
         if self.app_path and Path(self.app_path).exists():
             file = glob.glob(
@@ -282,7 +283,7 @@ class WheelProcessing():
         return file
 
     def get_extra_files(self) -> list:
-        """Get all extra files from app folder."""
+        """Get all extra files from the app folder."""
         files = []
         if self.app_path and Path(self.app_path).exists():
             app_file_whl = self.get_app_file()
@@ -292,7 +293,7 @@ class WheelProcessing():
         return files
 
     def copy_extra_files(self, extra_files: list, destination: str):
-        """Copy extra files/folders to app folder."""
+        """Copy extra files and folders to the app folder."""
         if extra_files and destination:
             for file in extra_files:
                 destination_file = Path(destination).joinpath(

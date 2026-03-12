@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Tests for preparing ven structure."""
+"""Tests for preparing the venv structure."""
 
 import shutil
 from pathlib import Path
@@ -14,9 +14,9 @@ APP_ENVIRONMENT_FOLDER = "app_environment"
 
 
 def test_prepare_structure_step_by_step(environment_structure_designated):
-    """Preparte struct step-by-step.
+    """Preparte the struct step-by-step.
 
-    Run preparation of each part separately.
+    Run the preparation for each part separately.
     """
     env_struct = environment_structure_designated[0]
     # App environment folder
@@ -38,40 +38,40 @@ def test_prepare_structure_step_by_step(environment_structure_designated):
 
 def test_venv_folder_prepare_get_remove_struct_not_prepared(
         environment_structure_designated):
-    """Venv folder - prepared environment structure
+    """The venv folder - prepared environment structure
 
-    1. Get path to venv folder
-    2. Remove venv folder
-    3. Get path to venv folder
+    1. Get the path to the venv folder
+    2. Remove the venv folder
+    3. Get the path to the venv folder
     """
     env_struct = environment_structure_designated[0]
     # Prepare
     with pytest.raises(Exception):
         env_struct.prepare_venv_folder()
-    # Get venv
+    # Get the venv
     assert not env_struct.get_path_venv_folder()
     # Remove
     env_struct.remove_venv_folder()
-    # Get venv
+    # Get the venv
     assert not env_struct.get_path_venv_folder()
 
 
 def test_venv_folder_get_remove_struct_prepared(
         environment_structure_designated):
-    """Venv folder - prepared environment structure.
+    """The venv folder - prepared environment structure.
 
-    1. Get path to venv folder
-    2. Remove venv folder
-    3. Get path to venv folder
+    1. Get the path to the venv folder
+    2. Remove the venv folder
+    3. Get the path to the venv folder
     """
     env_struct = environment_structure_designated[0]
-    # Prep structure
+    # Prep the structure
     env_struct.prepare_env_structure()
-    # Get venv
+    # Get the venv
     assert Path(env_struct.get_path_venv_folder()).exists()
     # Remove
     env_struct.remove_venv_folder()
-    # Get venv
+    # Get the venv
     assert not env_struct.get_path_venv_folder()
 
 
@@ -79,16 +79,16 @@ def test_context_file_get_remove_struct_not_prepared(
          environment_structure_designated):
     """Context file - not preparing environment structure.
 
-    1. Get path to context file
-    2. Remmove context file
-    3. Get path to context file
+    1. Get the path to the context file
+    2. Remmove the context file
+    3. Get the path to the context file
     """
     env_struct = environment_structure_designated[0]
-    # Get context file
+    # Get the context file
     assert not env_struct.get_path_context_file()
-    # Remove context file
+    # Remove the context file
     env_struct.remove_context_file()
-    # Get context file
+    # Get the context file
     assert not env_struct.get_path_context_file()
 
 
@@ -96,9 +96,9 @@ def test_context_file_get_remove_struct_prepared(
         environment_structure_designated):
     """Context file - prepare environment structure.
 
-    1. Get path to context file
-    2. Remmove context file
-    3. Get path to context file
+    1. Get the path to context file
+    2. Remmove the context file
+    3. Get the path to the context file
     """
     env_struct = environment_structure_designated[0]
     # Prep structure
@@ -115,9 +115,9 @@ def test_config_file_prepare_get_remove_struct_not_prepared(
         environment_structure_designated):
     """Config file - not preparing environment structure.
 
-    1. Get path to config
-    2. Remove config file
-    3. Get path to config
+    1. Get the path to config
+    2. Remove the config file
+    3. Get the path to the config
     """
     env_struct = environment_structure_designated[0]
     # Prepare
@@ -135,9 +135,9 @@ def test_config_file_get_remove_struct_prepared(
         environment_structure_designated):
     """Config file - prepare environment structure.
 
-    1. Get path to config
-    2. Remove config file
-    3. Get path to config
+    1. Get the path to config
+    2. Remove the config file
+    3. Get the path to config
     """
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
@@ -157,10 +157,11 @@ def test_config_file_get_remove_struct_prepared(
 
 
 def test_init_no_prepare_all_get(environment_structure_designated):
-    """Init env structure instance, no prepare, check items"""
+    """Init the venv structure instance without no prepare, and check the
+    items."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
-    # Path to app_environment
+    # Path to the app_environment
     env_folder_path = Path(root_location).joinpath(APP_ENVIRONMENT_FOLDER)
     assert not env_struct.get_path_app_environment_folder()
     # Context file - not exists
@@ -174,24 +175,23 @@ def test_init_no_prepare_all_get(environment_structure_designated):
 
 
 def test_create_valid_structure(environment_structure_designated):
-    """Env structure is at designated location."""
+    """The env structure is at the designated location."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
-    # Prep structure
+    # Prep the structure
     env_struct.prepare_env_structure()
-    # Path to root "app_environment"
+    # Path to the root "app_environment"
     assert str(Path(root_location).joinpath(APP_ENVIRONMENT_FOLDER)) == \
         str(env_struct.get_path_app_environment_folder())
 
 
 def test_create_valid_structure_fail(
         environment_structure_designated, monkeypatch):
-    """Creation of valid env structure failed, because of exception."""
-    # root_location = environment_structure_designated[1]
+    """The creation of a valid env structure failed due an exception."""
     env_struct = environment_structure_designated[0]
     monkeypatch.setattr(Path, "mkdir", Exception)
     with pytest.raises(Exception):
-        # Prep structure
+        # Prep the structure
         env_struct.prepare_env_structure()
 
 
@@ -199,10 +199,10 @@ def test_clear_environment_exclude_app_folder(
         environment_structure_designated):
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
-    # Prep structure
+    # Prep the structure
     env_struct.prepare_env_structure()
     env_struct.clear_environment_exclude_app_folder()
-    # Path to app_environment
+    # Path to the app_environment
     env_folder_path = Path(root_location).joinpath(APP_ENVIRONMENT_FOLDER)
     # Context file - not exists
     assert not Path(env_folder_path).joinpath(VENV_CONTEXT_FILE).exists()
@@ -218,7 +218,7 @@ def test_clear_environment(environment_structure_designated):
     """Clear the whole environment."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
-    # Prep structure
+    # Prep the structure
     env_struct.prepare_env_structure()
     # Clear it
     env_struct.clear_environment()
@@ -226,10 +226,10 @@ def test_clear_environment(environment_structure_designated):
 
 
 def test_remove_item_folder(environment_structure_designated):
-    """Remove item - folder."""
+    """Remove the item - folder."""
     # root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
-    # Prep structure
+    # Prep the structure
     env_struct.prepare_env_structure()
     # Remove
     venv_folder = env_struct.get_path_venv_folder()
@@ -240,7 +240,7 @@ def test_remove_item_folder(environment_structure_designated):
 
 def test_remove_item_fail(
         environment_structure_designated, tmp_path):
-    """TNBD"""
+    """The attempt to remove the item has failed."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
     env_struct.prepare_env_structure()
@@ -249,7 +249,7 @@ def test_remove_item_fail(
 
 
 def test_folder_is_empty(environment_structure_designated):
-    """Folder is empty."""
+    """The folder is empty."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
 
@@ -257,10 +257,10 @@ def test_folder_is_empty(environment_structure_designated):
 
 
 def test_folder_is_not_empty(environment_structure_designated):
-    """Folder is not empty."""
+    """The folder is not empty."""
     root_location = environment_structure_designated[1]
     env_struct = environment_structure_designated[0]
 
-    # Prepare struct
+    # Prepare the struct
     env_struct.prepare_env_structure()
     assert not env_struct.folder_is_empty(root_location)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Class for processing the old school style requirements file(s)."""
+"""A class for processing old-school style requirement files."""
 
 import logging
 import re
@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 
 
 class SetupProcessing():
-    """This class doing searching, checking the app's requirements the old
-       school way. Searching for file(s) '*requirements*,*'."""
+    """This class performs searches and checks the app's requirements the
+    old-school way, searching for files with names matching 'requirements,'.
+    """
 
     def __init__(self, /, **kwargs):
         self.app_path = kwargs.get("app_path", None)
@@ -40,19 +41,19 @@ class SetupProcessing():
                           start_fresh=False,
                           continue_processing=True
                           ) -> bool:
-        """Install dependencies, app and start it.
+        """Install dependencies, set up the app and start it.
 
         Args:
-        start_fresh = clear the environment and install it again
-        continue_processing = flag signaling 'try to install and start'
+        start_fresh = clear the environment and reinstall it
+        continue_processing = a flag signaling 'try to install and start'
 
         Returns:
-        True in case to signal next in the chain should countinue to
-        try to install and start.
+        True if the next step in the chain should continue with the
+        installation and startup process.
         """
         should_continue = continue_processing
         if continue_processing and self.it_is_me():
-            # Check if we are to suppose to install
+            # Check if we are supposed to install.
             if start_fresh and self.platform_handler:
                 should_continue = False
                 current_list = get_list_of_files_and_timestamp(
@@ -69,25 +70,26 @@ class SetupProcessing():
                         self.platform_handler.install_dependencies(
                             dependencies
                         )
-                    # Install app
+                    # Install the app
                     self.platform_handler.install_app(
                         self.app_path,
                         self.get_install_args()
                     )
                 except Exception as e:
                     self.config_handler.remove_app_files()
-                    logger.error("Installation of app failed. %s", e)
+                    logger.error(
+                        "The installation of the app failed. %s", e)
                     logger.error(traceback.format_exc())
                     raise
             if self.platform_handler:
-                # Start app
+                # Start the app
                 main_files = self.search_for_main_files()
                 exception_counter = 0
                 for item in main_files:
                     try:
-                        # Get app params if exists
+                        # Get the app params, if exists
                         app_params = self.config_handler.get_app_params()
-                        # Start app
+                        # Start the app
                         self.platform_handler.start_app(
                             self.app_path,
                             item,
@@ -95,27 +97,26 @@ class SetupProcessing():
                         )
                     except Exception as e:
                         logger.error(
-                            "Attempt to start main file %s failed(%s).",
+                            "Attempt to start the main file %s failed(%s).",
                             item, e)
-                        # Do we need just count of exceptions
-                        # themselves
+                        # Do we only need the count of exceptions themselves?
                         exception_counter += 1
                         continue
-                # If amount of founded 'main' files is equal to catched
-                # exceptions --> raise error
+                # If the number of found 'main' files equals the number of
+                # caught exceptions, raise an error.
                 if exception_counter == len(main_files):
                     raise RuntimeError(
-                        """Could not properly start the app, because no valid
-                           'main file' has been discovered.""")
+                        """The app could not start properly because not valid
+                        'main file' was found.""")
                 should_continue = False
             else:
-                logger.warning("Cannot continue because unknown platform,\
-                    during of setuptool's installation.")
+                logger.warning("""Cannot continue due to an unknown platform
+                               during the setup tool's installation.""")
 
         return should_continue
 
     def files_changed(self) -> bool:
-        """Check if files/folders changed."""
+        """Check if files/folders have changed."""
         changed = False
         previous_list = self.config_handler.get_app_files()
         if previous_list and self.app_path:
@@ -123,7 +124,7 @@ class SetupProcessing():
                 self.app_path,
                 filters=FILES_CHANGED_FILTER + REQUIRED_FILES
             )
-            # Check old list vs. current list
+            # Compare the old list with the current list
             for key, value in current_list.items():
                 if key in previous_list:
                     if previous_list[key] != value:
@@ -140,10 +141,10 @@ class SetupProcessing():
         """Search for main files.
 
         Args:
-        folder_path = where to search
+        folder_path = the folder where to search
 
         Returns:
-        Set of main files
+        A set of main files
         """
         search_folder = self.app_path
         if folder_path:
@@ -153,7 +154,7 @@ class SetupProcessing():
             config_main_file = \
                 self.config_handler.get_main_file()
             if config_main_file:
-                # Lets find the file
+                # Let's find the file
                 founded_files = Path(search_folder).\
                     rglob(config_main_file)
                 for file in founded_files:
@@ -168,21 +169,21 @@ class SetupProcessing():
                                 all_main_files.append(str(file))
                     except Exception as e:
                         logger.error(
-                            "Search for main entry point in file '%s'\
+                            "Search for the main entry point in the file '%s'\
                             failed(%s).", file, e)
 
         except Exception as e:
-            logger.error("Search for main file failed. %s", e)
+            logger.error("Search for the main file failed. %s", e)
         return set(all_main_files)
 
     def it_is_me(self) -> bool:
         """Try to assume that this app can be installed via setuptools.
 
-        Searching for all file required by setuptools to be successfully
-        installed.
+        Search for all files required by setuptools for successful
+        installation.
 
         Returns:
-        In case yes, returns True, othewise False
+        True if the app cant be installed, othewise False
         """
         valid = False
         if Path(self.app_path).exists():
@@ -195,13 +196,13 @@ class SetupProcessing():
         return valid
 
     def find_setup_file(self, app_path=None) -> str | None:
-        """Try to find setup.py file if exists.
+        """Try to find the setup.py file, if exists.
 
         Args:
-        app_path = where to serch for setup.py file
+        app_path = the path where to search for the setp file
 
         Returns:
-        Path to setup.py file or None
+        Path to the setup.py file or None
         """
         setup_file_path = None
         search_path = self.app_path
@@ -214,14 +215,14 @@ class SetupProcessing():
         return setup_file_path
 
     def get_install_args(self) -> list:
-        """Get args required for app installation.
+        """Get the args required for app installation.
 
         Example:
-        returned list of args --> ['-m', 'pip', 'install']
+        Returned a list of args --> ['-m', 'pip', 'install']
         will be extended to format(for explanation)
         <path_to_pathon> -m pip -install <file>
 
         Returns:
-        List of arguments.
+        A list of arguments.
         """
         return SETUP_INSTALLATION_ARGS

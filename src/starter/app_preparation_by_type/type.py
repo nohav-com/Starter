@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Simple abstract class for classes defining type of package classes."""
+"""Simple abstract class for defining package type classes."""
 
 from abc import ABC, abstractmethod
 
@@ -7,30 +7,31 @@ __all__ = ['TypeOfPackage']
 
 
 class TypeOfPackage(ABC):
-    """Just simple interface."""
+    """Simple interface."""
     @abstractmethod
     def it_is_me(self):
-        """Check if app package/source code is my type.
+        """Check if the app package/source code matches my type.
 
         Returns:
-        True in case postive identification, otherwise False
+        True if the identification is positive, otherwise False.
         """
 
     @abstractmethod
     def files_changed(self):
-        """Check if files/folders changed from the last run of the app.
+        """Check if files/folders have changed since the last run of the app.
 
         Returns:
-        True in case of changes happened, otherwise False
+        True if changes occurred, otherwise False.
         """
 
     @abstractmethod
     def search_for_main_files(self, main_folder=None):
-        """Search for main file in source code to be use to start app.
+        """Search for the main file in the source code to use for startign the
+        app.
 
         Args:
-        main_folder = where to start looking
+        main_folder = the folder where the search should begin
 
         Returns:
-        Path(s) to main file(s)
+        Path(s) to the main file(s)
         """

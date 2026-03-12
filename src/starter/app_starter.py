@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Main crossroad to start 'app starter'.
+"""Main entry point to start the 'Starter' app.
 
-Processing args, init all required instance, etc.
+Processes the input arguments, initializes all required instances,
+and performs necessary setup tasks.
 """
 
 import argparse
@@ -20,20 +21,21 @@ logger = logging.getLogger(__name__)
 
 def main_starter(app_path=None, clear_environment=False, main_file=None):
     try:
-        # Set logging settings
+        # Sets upt logging configuration
         set_logging_settings()
 
-        logger.info("Startting app starter")
+        logger.info("Starts the Starter instance")
         env_structure = EnvironmentStructure(
             main_file=main_file
         )
         env_structure.prepare_env_structure()
 
-        # Argument clear_environment passed - clear the house
-        # Everything is removed(app_folder included as well)
+        # Argument `clear_environment` is passed - clearing the 
+        # environment.
+        # All items, including the app folder, will be removed.
         if clear_environment:
             env_structure.clear_environment()
-            # Create env structure - from scratch
+            # Create the environment structure from scratch.
             env_structure.prepare_env_structure()
 
         # Context handler
@@ -44,20 +46,20 @@ def main_starter(app_path=None, clear_environment=False, main_file=None):
         config_handler = ConfigHandler(
             config_file=env_structure.get_path_config_file()
         )
-        # Check if patht to app folder is set)
+        # Check if the path to the app folder is set
         if app_path:
             valid_path = escape_string(app_path)
-            # Set app folder
+            # Set the path for the app folder
             env_structure.set_path_app_folder(valid_path)
             config_handler.set_value_for_key("app_folder", valid_path)
         else:
-            # Get app path from config
+            # Get the app path from the config file
             config_app_path = config_handler.get_app_folder()
             config_app_path = escape_string(config_app_path)
             if config_app_path:
                 env_structure.set_path_app_folder(config_app_path)
 
-        # App run prepraration instance
+        # Initialize the app preparation instance.
         app_preparation_and_run = AppPreparationAndRun(
             context_handler=context_handler,
             config_handler=config_handler,
@@ -68,11 +70,12 @@ def main_starter(app_path=None, clear_environment=False, main_file=None):
             env_structure.remove_venv_folder()
             env_structure.prepare_venv_folder()
 
-        # Time to prepare and start the app, if its possible
+        # Prepare and start the app, if possible.
         app_preparation_and_run.venv_preparation()
         app_preparation_and_run.ready_and_start(start_fresh)
     except Exception as e:
-        logger.error("Problem with preparing venv for app(%s).", e)
+        logger.error(
+            "Problem with preparing the venv for the app(%s).", e)
         # Clearing the whole app_environment(folder)
         # logger.info("Removing almost everything(app folder excluded).")
         # env_structure.clear_environment_exclude_app_folder()
@@ -81,23 +84,23 @@ def main_starter(app_path=None, clear_environment=False, main_file=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         prog="App start",
-        description="Preparing enviroment for app.")
+        description="Preparing the enviroment for the app.")
 
     parser.add_argument('--app_path',
                         dest='app_path',
-                        help='Specifying where is app code stored,\
-                              to be used.',
+                        help='Specify the location where the app code is \
+                              stored, to be used.',
                         default="")
 
     parser.add_argument('--clear_environment',
                         dest='clear_environment',
                         action='store_true',
-                        help='Flag to signal, clear environment\
-                              (completely everything).',
+                        help='Flag to signal to clearing the environment\
+                              (removes everything completely).',
                         default=False)
     parser.add_argument('--main_file',
                         dest='main_file',
-                        help='Specifying name of the manin file to start.',
+                        help='Specify the  name of the main file to start.',
                         default="")
 
     options = parser.parse_args()
@@ -111,7 +114,7 @@ if __name__ == '__main__':
         clear = options.clear_environment
         main_file = options.main_file
     except Exception as e:
-        # Something weng wrong, show me the error
+        # Something weng wrong, show the error
         print("Error: %s", e)
 
     # Default rc code
